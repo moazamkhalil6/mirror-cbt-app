@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Mirror: Honest CBT (Multiplayer)</title>
+  <style>
+    body { margin: 0; min-height: 100vh; background: #050816; color: #f9fafb; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    header h1 { margin: 0; font-size: 1.4rem; font-weight: 700; }
+    header p { margin: 0; font-size: 0.8rem; opacity: 0.65; max-width: 420px; }
+    .session-bar { margin-bottom: 1.5rem; padding: 0.9rem 1rem; border-radius: 12px; background: linear-gradient(135deg, rgba(56,189,248,0.1), rgba(129,140,248,0.08)); border: 1px solid rgba(148,163,184,0.4); display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
+    .flex { display: flex; align-items: center; }
+    .gap { gap: 8px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    button { cursor: pointer; border: none; }
+    .btn { border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+    .btn-green { padding: 0.4rem 0.9rem; background: linear-gradient(135deg, #22c55e, #16a34a, #22c55e); color: #020617; }
+    .btn-join { padding: 0.25rem 0.7rem; background: #111827; color: #e5e7eb; font-size: 0.75rem; }
+    .copy-btn { display: inline-flex; align-items: center; gap: 4px; padding: 0.3rem 0.6rem; border-radius: 999px; border: 1px solid rgba(148,163,184,0.7); background: transparent; font-size: 0.75rem; color: #e5e7eb; }
+    .input-join { background: transparent; border: none; outline: none; color: #e5e7eb; font-size: 0.8rem; width: 90px; }
+    .input-group { display: flex; gap: 4px; align-items: center; background: rgba(15,23,42,0.8); padding: 0.3rem 0.5rem; border-radius: 999px; border: 1px solid rgba(148,163,184,0.4); }
+    textarea { width: 100%; min-height: 200px; resize: vertical; background: #020617; color: #e5e7eb; border-radius: 8px; border: 1px solid rgba(55,65,81,0.9); padding: 0.6rem; font-size: 0.85rem; outline: none; }
+    .panel { border-radius: 12px; background: rgba(15,23,42,0.9); padding: 0.9rem; border: 1px solid rgba(148,163,184,0.3); display: flex; flex-direction: column; gap: 0.5rem; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; }
+    .panel-header h2 { margin: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; }
+    .panel small { font-size: 0.7rem; opacity: 0.6; }
+    .tone-result { margin-top: 8px; padding: 0.6rem; border-radius: 8px; background: rgba(15,118,110,0.18); font-size: 0.8rem; }
+    .btn-tone { display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.7rem; border-radius: 999px; background: rgba(59,130,246,0.18); color: #bfdbfe; font-size: 0.75rem; }
+    .analysis-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0.6rem 1.4rem; border-radius: 999px; font-size: 0.9rem; font-weight: 600; background: linear-gradient(135deg, #eab308, #f97316, #ea580c); color: #020617; margin-top: 1.2rem; }
+    .analysis-btn[disabled] { opacity: 0.7; cursor: not-allowed; }
+    .results { margin-top: 1.4rem; border-radius: 12px; background: rgba(15,23,42,0.9); padding: 0.9rem 1rem; border: 1px solid rgba(148,163,184,0.4); }
+    .results h3 { margin: 0 0 4px 0; font-size: 0.85rem; }
+    .results p { margin: 0; opacity: 0.9; }
+    .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="flex gap">
+        <div style="font-size:26px;">🗨️</div>
+        <div>
+          <h1>THE MIRROR: Honest CBT (Multiplayer)</h1>
+          <p>Two partners. One shared truth engine. No sugarcoating, but focused on repair, not demolition.</p>
+        </div>
+      </div>
+      <div id="leaveBtnWrapper"></div>
+    </header>
+    <section class="session-bar">
+      <div class="flex gap">
+        <div style="font-size:18px;">👥</div>
+        <div>
+          <div style="font-size:0.85rem;font-weight:600;" id="sessionInfo">Session · No active session</div>
+          <div id="roleInfo" style="font-size:0.75rem;opacity:0.7;"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn btn-green" id="startSession">Start new session</button>
+        <div class="input-group">
+          <input type="text" id="joinInput" class="input-join" placeholder="Join code" />
+          <button class="btn-join" id="joinBtn">Join</button>
+        </div>
+        <button class="copy-btn" id="copyLinkBtn" style="display:none;">🔗 Copy link</button>
+      </div>
+      <div id="errorMsg" style="width:100%;font-size:0.75rem;color:#fecaca;display:none;margin-top:4px;"></div>
+    </section>
+    <div class="grid">
+      <section class="panel" id="panelA">
+        <div class="panel-header">
+          <div class="flex gap">
+            <span style="font-size:16px;">⚖️</span>
+            <h2>Partner A</h2>
+          </div>
+          <small id="editInfoA"></small>
+        </div>
+        <textarea id="textareaA" placeholder="Describe your side: what happened, how you felt, what you think is unfair, what you regret, what you want."></textarea>
+        <div class="flex" style="justify-content: space-between; font-size:0.75rem;">
+          <button class="btn-tone" id="toneBtnA">✨ Tone check</button>
+          <span id="charCountA" style="opacity:0.6;">0 characters</span>
+        </div>
+        <div id="toneResultA"></div>
+      </section>
+      <section class="panel" id="panelB">
+        <div class="panel-header">
+          <div class="flex gap">
+            <span style="font-size:16px;">⚖️</span>
+            <h2>Partner B</h2>
+          </div>
+          <small id="editInfoB"></small>
+        </div>
+        <textarea id="textareaB" placeholder="Describe your side: what happened, how you felt, what you think is unfair, what you regret, what you want."></textarea>
+        <div class="flex" style="justify-content: space-between; font-size:0.75rem;">
+          <button class="btn-tone" id="toneBtnB">✨ Tone check</button>
+          <span id="charCountB" style="opacity:0.6;">0 characters</span>
+        </div>
+        <div id="toneResultB"></div>
+      </section>
+    </div>
+    <div style="display:flex;justify-content:center;">
+      <button class="analysis-btn" id="analyzeBtn">🧠 Run CBT analysis</button>
+    </div>
+    <section class="results" id="resultsSection">
+      <div class="flex gap">
+        <div style="font-size:18px;">📖</div>
+        <h2 style="margin:0;font-size:0.95rem;text-transform:uppercase;letter-spacing:1px;opacity:0.85;">Session outcome</h2>
+      </div>
+      <div id="resultsContent">
+        <p style="margin-top:8px;font-size:0.8rem;opacity:0.7;">No analysis yet. Fill both sides, start or join a session, then hit <strong>Run CBT analysis</strong>.</p>
+      </div>
+    </section>
+  </div>
+<script>
+(() => {
+  // State variables
+  let sessionId = '';
+  let sessionActive = false;
+  let myRole = null; // 'A' or 'B'
+  let partnerA = '';
+  let partnerB = '';
+  let result = null;
+  let isAnalyzing = false;
+  let toneResultA = null;
+  let toneResultB = null;
+  let pollInterval = null;
+  let storageUri = '';
+
+  // Debounce utility
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+
+  // Fake tone check function
+  function fakeToneCheck(text) {
+    if (!text.trim()) {
+      return { score: 3, critique: 'There is no content to analyse. If you want feedback, you actually have to say something.', rewrite: '' };
+    }
+    const isHarsh = /idiot|stupid|useless|psycho|never|always|hate/i.test(text) || text.length > 350;
+    return {
+      score: isHarsh ? 4 : 7,
+      critique: isHarsh
+        ? 'Your tone comes across as harsh, critical or absolute. That might feel justified to you, but it will likely make the other person defensive instead of collaborative.'
+        : 'Your tone has frustration but also some room for dialogue. You can tighten it by being more specific about behaviours and less about character.',
+      rewrite: isHarsh
+        ? 'Try something like: “I’m angry and hurt about what happened. When you did X, I felt Y. I need Z from you going forward.”'
+        : 'Try something like: “This is important to me. When X happens, I feel Y. Can we agree on doing Z instead?”',
+    };
+  }
+
+  // Local analysis logic (same as server version)
+  function runLocalAnalysis(a, b) {
+    const short = (text, max = 220) => text && text.length > max ? text.slice(0, max) + '...' : (text || 'no input');
+    return {
+      summary: `Partner A and Partner B both have concerns. Partner A seems focused on: "${short(a)}". Partner B seems focused on: "${short(b)}".`,
+      fairness_assessment:
+        'Based on the descriptions alone, both of you are contributing to the tension in different ways. This is a surface-level analysis; real fairness needs clearer facts, but neither of you is perfectly innocent here.',
+      partnerA_patterns: [
+        a
+          ? 'Partner A tends to focus strongly on their perspective and may be under-explaining specific behaviours they regret.'
+          : 'Partner A has not provided enough detail to understand their side.',
+      ],
+      partnerB_patterns: [
+        b
+          ? 'Partner B appears sensitive to perceived unfairness and may assume intent from Partner A without always checking.'
+          : 'Partner B has not provided enough detail to understand their side.',
+      ],
+      partnerA_cbt: [
+        'Notice when your thoughts turn into all-or-nothing judgments about your partner (e.g. "You never...", "You always..."). Try to replace them with more specific, factual statements.',
+      ],
+      partnerB_cbt: [
+        'Watch for mind-reading (assuming you know exactly what Partner A meant or felt). Ask directly instead of filling in the blanks.',
+      ],
+      boundaries: [
+        'No name-calling, mocking or personal insults during arguments.',
+        'If either of you feels overwhelmed, you can call a 30-minute break, but you must agree a time to resume the conversation the same day if possible.',
+      ],
+      conversation_scripts: [
+        'Partner A: "When you do X, I end up feeling Y. I don’t want to attack you; I want us to fix this together."',
+        'Partner B: "I’m not saying you’re a bad person, but when this happens, I feel Z. Can we try a different approach next time?"',
+      ],
+      partnerA_homework: [
+        'Write down 3 recurring thoughts you have about the relationship when you’re upset and challenge each one with a more balanced alternative.',
+      ],
+      partnerB_homework: [
+        'Identify one moment this week where you normally shut down and instead say out loud: "I need a short break, then I’m willing to talk."',
+      ],
+    };
+  }
+
+  // UI update functions
+  function updateSessionInfo() {
+    const sessionInfo = document.getElementById('sessionInfo');
+    const roleInfo = document.getElementById('roleInfo');
+    const copyBtn = document.getElementById('copyLinkBtn');
+    const leaveWrapper = document.getElementById('leaveBtnWrapper');
+    if (sessionActive && sessionId) {
+      sessionInfo.textContent = 'Session: ' + sessionId;
+      roleInfo.innerHTML = 'Your role: <span style="font-weight:600;">' + (myRole === 'A' ? 'Partner A' : 'Partner B') + '</span>';
+      copyBtn.style.display = 'inline-flex';
+      copyBtn.onclick = () => {
+        const url = window.location.origin + window.location.pathname + '?session=' + encodeURIComponent(sessionId);
+        navigator.clipboard.writeText(url).catch(() => {});
+        copyBtn.textContent = '✔️ Copied';
+        setTimeout(() => {
+          copyBtn.innerHTML = '🔗 Copy link';
+        }, 1500);
+      };
+      leaveWrapper.innerHTML = '<button class="copy-btn" id="leaveBtn">🚪 Leave</button>';
+      document.getElementById('leaveBtn').onclick = leaveSession;
+    } else {
+      sessionInfo.textContent = 'Session · No active session';
+      roleInfo.textContent = '';
+      copyBtn.style.display = 'none';
+      leaveWrapper.innerHTML = '';
+    }
+  }
+  function updateEditInfos() {
+    document.getElementById('editInfoA').textContent = myRole === 'A' ? 'You can edit this panel.' : 'Read-only (belongs to Partner A).';
+    document.getElementById('editInfoB').textContent = myRole === 'B' ? 'You can edit this panel.' : 'Read-only (belongs to Partner B).';
+  }
+  function renderPanels() {
+    const taA = document.getElementById('textareaA');
+    const taB = document.getElementById('textareaB');
+    taA.value = partnerA;
+    taB.value = partnerB;
+    document.getElementById('charCountA').textContent = partnerA.length + ' characters';
+    document.getElementById('charCountB').textContent = partnerB.length + ' characters';
+    taA.readOnly = myRole !== 'A' || !sessionActive;
+    taB.readOnly = myRole !== 'B' || !sessionActive;
+  }
+  function renderToneResults() {
+    const tA = document.getElementById('toneResultA');
+    const tB = document.getElementById('toneResultB');
+    tA.innerHTML = '';
+    tB.innerHTML = '';
+    if (toneResultA) {
+      const div = document.createElement('div');
+      div.className = 'tone-result';
+      div.innerHTML = '<div style="font-weight:600;margin-bottom:4px;">Tone score: ' + toneResultA.score + '/10</div>' +
+        '<div style="margin-bottom:4px;">' + toneResultA.critique + '</div>' +
+        (toneResultA.rewrite ? '<div style="opacity:0.85;">Suggested frame: <em>' + toneResultA.rewrite + '</em></div>' : '');
+      tA.appendChild(div);
+    }
+    if (toneResultB) {
+      const div = document.createElement('div');
+      div.className = 'tone-result';
+      div.innerHTML = '<div style="font-weight:600;margin-bottom:4px;">Tone score: ' + toneResultB.score + '/10</div>' +
+        '<div style="margin-bottom:4px;">' + toneResultB.critique + '</div>' +
+        (toneResultB.rewrite ? '<div style="opacity:0.85;">Suggested frame: <em>' + toneResultB.rewrite + '</em></div>' : '');
+      tB.appendChild(div);
+    }
+  }
+  function renderResults() {
+    const container = document.getElementById('resultsContent');
+    container.innerHTML = '';
+    if (!result) {
+      container.innerHTML = '<p style="margin-top:8px;font-size:0.8rem;opacity:0.7;">No analysis yet. Fill both sides, start or join a session, then hit <strong>Run CBT analysis</strong>.</p>';
+      return;
+    }
+    const items = [];
+    items.push({ title: '1) Summary of the situation', lines: [result.summary] });
+    items.push({ title: '2) Fairness & responsibility', lines: [result.fairness_assessment] });
+    items.push({ title: '3) Patterns in Partner A', lines: result.partnerA_patterns });
+    items.push({ title: '4) Patterns in Partner B', lines: result.partnerB_patterns });
+    items.push({ title: '5) CBT focus for Partner A', lines: result.partnerA_cbt });
+    items.push({ title: '6) CBT focus for Partner B', lines: result.partnerB_cbt });
+    items.push({ title: '7) Boundaries & agreements', lines: result.boundaries });
+    items.push({ title: '8) Conversation scripts', lines: result.conversation_scripts });
+    items.push({ title: '9) Homework for Partner A', lines: result.partnerA_homework });
+    items.push({ title: '10) Homework for Partner B', lines: result.partnerB_homework });
+    items.forEach(section => {
+      const div = document.createElement('div');
+      div.style.marginTop = '10px';
+      const h = document.createElement('h3');
+      h.textContent = section.title;
+      div.appendChild(h);
+      section.lines.forEach((line) => {
+        const p = document.createElement('p');
+        p.textContent = line;
+        div.appendChild(p);
+      });
+      container.appendChild(div);
+    });
+  }
+  function renderAll() {
+    updateSessionInfo();
+    updateEditInfos();
+    renderPanels();
+    renderToneResults();
+    renderResults();
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    analyzeBtn.disabled = isAnalyzing || !sessionActive;
+    analyzeBtn.textContent = isAnalyzing ? '⏳ Analyzing session...' : '🧠 Run CBT analysis';
+  }
+  function showError(msg) {
+    const err = document.getElementById('errorMsg');
+    err.textContent = msg;
+    err.style.display = 'block';
+    setTimeout(() => { err.style.display = 'none'; }, 3000);
+  }
+  // Polling to fetch session data
+  function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(() => {
+      if (!sessionActive || !storageUri) return;
+      fetch(storageUri)
+        .then((res) => res.json())
+        .then((data) => {
+          if (myRole !== 'A' && typeof data.partnerA === 'string') partnerA = data.partnerA;
+          if (myRole !== 'B' && typeof data.partnerB === 'string') partnerB = data.partnerB;
+          result = data.result || null;
+          isAnalyzing = data.isAnalyzing || false;
+          renderAll();
+        })
+        .catch(() => {
+          showError('Could not sync session.');
+        });
+    }, 1500);
+  }
+  // Update remote JSON
+  const debouncedUpdateA = debounce(() => {
+    if (sessionActive && myRole === 'A' && storageUri) {
+      updateRemote();
+    }
+  }, 700);
+  const debouncedUpdateB = debounce(() => {
+    if (sessionActive && myRole === 'B' && storageUri) {
+      updateRemote();
+    }
+  }, 700);
+  function updateRemote() {
+    const payload = { partnerA, partnerB, result, isAnalyzing };
+    fetch(storageUri, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  }
+  function startSession() {
+    const initial = { partnerA: '', partnerB: '', result: null, isAnalyzing: false };
+    fetch('https://api.jsonstorage.net/v1/json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(initial),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        storageUri = data.uri;
+        sessionId = btoa(storageUri);
+        sessionActive = true;
+        myRole = 'A';
+        partnerA = '';
+        partnerB = '';
+        result = null;
+        toneResultA = null;
+        toneResultB = null;
+        isAnalyzing = false;
+        startPolling();
+        renderAll();
+      })
+      .catch(() => {
+        showError('Could not create session.');
+      });
+  }
+  function joinSession() {
+    const code = document.getElementById('joinInput').value.trim();
+    if (!code) { showError('Enter a session code first.'); return; }
+    try {
+      const uri = atob(code);
+      storageUri = uri;
+    } catch (e) {
+      showError('Invalid code');
+      return;
+    }
+    fetch(storageUri)
+      .then((res) => {
+        if (!res.ok) throw new Error('not found');
+        return res.json();
+      })
+      .then((data) => {
+        sessionId = code;
+        sessionActive = true;
+        myRole = 'B';
+        partnerA = data.partnerA || '';
+        partnerB = data.partnerB || '';
+        result = data.result || null;
+        toneResultA = null;
+        toneResultB = null;
+        isAnalyzing = false;
+        startPolling();
+        renderAll();
+      })
+      .catch(() => {
+        showError('Session not found. Check the code.');
+      });
+  }
+  function leaveSession() {
+    sessionId = '';
+    sessionActive = false;
+    myRole = null;
+    partnerA = '';
+    partnerB = '';
+    result = null;
+    toneResultA = null;
+    toneResultB = null;
+    isAnalyzing = false;
+    storageUri = '';
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    renderAll();
+  }
+  function analyze() {
+    if (!sessionActive) { showError('Create or join a session first.'); return; }
+    isAnalyzing = true;
+    renderAll();
+    setTimeout(() => {
+      result = runLocalAnalysis(partnerA, partnerB);
+      isAnalyzing = false;
+      // Update remote so partner sees results
+      updateRemote();
+      renderAll();
+    }, 300);
+  }
+  // Initial setup
+  window.addEventListener('DOMContentLoaded', () => {
+    // auto-join via query parameter
+    const params = new URLSearchParams(window.location.search);
+    const sess = params.get('session');
+    if (sess) {
+      document.getElementById('joinInput').value = sess;
+      joinSession();
+    }
+    document.getElementById('startSession').onclick = startSession;
+    document.getElementById('joinBtn').onclick = joinSession;
+    document.getElementById('analyzeBtn').onclick = analyze;
+    document.getElementById('textareaA').addEventListener('input', (e) => {
+      partnerA = e.target.value;
+      document.getElementById('charCountA').textContent = partnerA.length + ' characters';
+      toneResultA = null;
+      debouncedUpdateA();
+    });
+    document.getElementById('textareaB').addEventListener('input', (e) => {
+      partnerB = e.target.value;
+      document.getElementById('charCountB').textContent = partnerB.length + ' characters';
+      toneResultB = null;
+      debouncedUpdateB();
+    });
+    document.getElementById('toneBtnA').onclick = () => { toneResultA = fakeToneCheck(partnerA); renderToneResults(); };
+    document.getElementById('toneBtnB').onclick = () => { toneResultB = fakeToneCheck(partnerB); renderToneResults(); };
+    renderAll();
+  });
+})();
+</script>
+</body>
+</html>
