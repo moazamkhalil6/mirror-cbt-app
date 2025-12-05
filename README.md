@@ -1,2 +1,2 @@
 # mirror-cbt-app
-An app cognitive behavioral therapy
+An app for cognitive behavioral therapy
