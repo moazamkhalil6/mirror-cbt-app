@@ -1,0 +1,1580 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mirror</title>
+  <meta name="color-scheme" content="dark light"/>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1622; --muted:#9aa7b4; --text:#e7eef6;
+      --line:#1f2b3a; --good:#43d17a; --warn:#f3c969; --bad:#ff5c77; --accent:#7aa7ff;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --r:16px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    body{ margin:0; background:linear-gradient(120deg,#05070a,#0b0f14 40%, #070b12); color:var(--text); }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+    .wrap{ max-width:1080px; padding:18px; margin:0 auto; }
+    .topbar{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      position:sticky; top:0; backdrop-filter: blur(10px);
+      background: rgba(11,15,20,.7); border-bottom:1px solid var(--line); z-index:10;
+      padding:12px 18px;
+    }
+    .brand{ display:flex; gap:10px; align-items:center; }
+    .logo{
+      width:34px; height:34px; border-radius:10px;
+      background: radial-gradient(circle at 30% 20%, #a5c7ff, #2b5cff 35%, #0c1430 70%);
+      box-shadow: var(--shadow);
+    }
+    .brand h1{ font-size:14px; margin:0; letter-spacing:.4px; }
+    .tag{ font-size:12px; color:var(--muted); }
+    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .btn{
+      border:1px solid var(--line); background: rgba(15,22,34,.6); color:var(--text);
+      padding:10px 12px; border-radius:12px; cursor:pointer; transition:.15s;
+      display:inline-flex; gap:8px; align-items:center;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color:#2a3a52; }
+    .btn.primary{ background: linear-gradient(180deg, rgba(122,167,255,.25), rgba(122,167,255,.08)); border-color: rgba(122,167,255,.35); }
+    .btn.danger{ background: rgba(255,92,119,.12); border-color: rgba(255,92,119,.35); }
+    .btn.good{ background: rgba(67,209,122,.12); border-color: rgba(67,209,122,.35); }
+    .btn.ghost{ background: transparent; }
+    .pill{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+    .grid{ display:grid; gap:12px; grid-template-columns: 360px 1fr; align-items:start; }
+    @media(max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+    .card{
+      background: rgba(15,22,34,.65);
+      border:1px solid var(--line); border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding:14px;
+    }
+    .card h2{ margin:0 0 8px; font-size:14px; letter-spacing:.3px; }
+    .muted{ color:var(--muted); font-size:12px; line-height:1.45; }
+    .hr{ height:1px; background: var(--line); margin:12px 0; }
+    label{ font-size:12px; color:var(--muted); display:block; margin:10px 0 6px; }
+    input, textarea, select{
+      width:100%; box-sizing:border-box;
+      background: rgba(5,7,10,.5);
+      border:1px solid var(--line);
+      color:var(--text);
+      padding:10px 10px;
+      border-radius: 12px;
+      outline:none;
+    }
+    textarea{ min-height: 96px; resize: vertical; }
+    .split{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media(max-width:650px){ .split{ grid-template-columns: 1fr; } }
+    .kpi{ display:flex; gap:10px; flex-wrap:wrap; }
+    .k{ padding:10px 12px; border-radius:14px; border:1px solid var(--line); background: rgba(5,7,10,.35); }
+    .k .n{ font-size:16px; font-weight:700; }
+    .k .l{ font-size:11px; color:var(--muted); }
+    .list{ display:flex; flex-direction:column; gap:8px; }
+    .item{
+      padding:10px 10px; border-radius:14px;
+      border:1px solid var(--line); background: rgba(5,7,10,.35);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+    }
+    .small{ font-size:12px; color:var(--muted); }
+    .badge{ font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--line); }
+    .bG{ border-color: rgba(67,209,122,.45); color: var(--good); background: rgba(67,209,122,.1); }
+    .bY{ border-color: rgba(243,201,105,.55); color: var(--warn); background: rgba(243,201,105,.1); }
+    .bR{ border-color: rgba(255,92,119,.55); color: var(--bad); background: rgba(255,92,119,.1); }
+    .hint{ font-size:12px; color:var(--muted); margin-top:8px; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .toast{
+      position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+      background: rgba(15,22,34,.9); border:1px solid var(--line);
+      padding:10px 12px; border-radius:12px; box-shadow: var(--shadow);
+      display:none; z-index:50;
+    }
+    .dangerBox{ border:1px solid rgba(255,92,119,.4); background: rgba(255,92,119,.08); padding:12px; border-radius:14px; }
+    .goodBox{ border:1px solid rgba(67,209,122,.35); background: rgba(67,209,122,.08); padding:12px; border-radius:14px; }
+    .warnBox{ border:1px solid rgba(243,201,105,.35); background: rgba(243,201,105,.08); padding:12px; border-radius:14px; }
+    .right{ text-align:right; }
+    .inline{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .checkRow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .check{
+      border:1px solid var(--line); background: rgba(5,7,10,.35);
+      padding:8px 10px; border-radius: 12px; font-size:12px; color:var(--text);
+      display:flex; gap:8px; align-items:center;
+    }
+    .check input{ width:auto; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo" id="logo"></div>
+      <div>
+        <h1 id="appName">Mirror</h1>
+        <div class="tag" id="appTag">CBT conflict resolution. Private by default.</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="pill" id="vaultState">Locked</span>
+      <button class="btn danger" id="quickExitBtn" title="Quick Exit (panic)"><span>⛔</span><span>Quick Exit</span></button>
+      <button class="btn" id="lockBtn" style="display:none"><span>🔒</span><span>Lock</span></button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <div class="card">
+        <h2>Navigation</h2>
+        <div class="muted" id="navHint">Unlock to use the app.</div>
+        <div class="hr"></div>
+        <div class="list" id="nav"></div>
+        <div class="hr"></div>
+        <div class="muted">
+          <div class="warnBox">
+            <b>Safety note:</b> This is not emergency support or a substitute for therapy.
+            If there’s violence, coercion, or outing threats, the app will pivot to safety guidance.
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="main"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script type="module">
+/** =========================================================
+ *  MIRROR (Single-file MVP)
+ *  - Offline, encrypted local vault
+ *  - Couples conflict intake + CBT/fairness report
+ *  - Stealth mode + quick exit
+ *  ========================================================= */
+
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, attrs={}, children=[]) => {
+  const n = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k === "html") n.innerHTML = v;
+    else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for (const c of children) n.append(c);
+  return n;
+};
+
+const toast = (msg) => {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(toast._to);
+  toast._to = setTimeout(()=> t.style.display="none", 2200);
+};
+
+const STORAGE_KEY = "mirror_vault_v1";
+const META_KEY = "mirror_meta_v1";
+
+/** -----------------------------
+ *  Basic state
+ *  ----------------------------- */
+let state = {
+  locked: true,
+  key: null, // CryptoKey in memory only
+  vault: null, // decrypted object
+  view: "LOCK",
+  selected: {
+    relationshipId: null,
+    conflictId: null,
+    activePartnerId: null,
+  }
+};
+
+/** -----------------------------
+ *  Default vault shape
+ *  ----------------------------- */
+function defaultVault() {
+  return {
+    version: 1,
+    createdAt: new Date().toISOString(),
+    users: [],
+    relationships: [],
+    conflicts: [],
+    checkins: [],
+    settings: {
+      stealth: false,
+      autoLockMinutes: 10,
+      pinEnabled: false,
+      pinVerifier: null, // {saltB64, ivB64, ctB64} encrypted blob verifying pin
+      appAlias: { name: "Mirror", tag: "CBT conflict resolution. Private by default." },
+      stealthAlias: { name: "Notes", tag: "Private notes. Offline." }
+    }
+  };
+}
+
+/** -----------------------------
+ *  Crypto helpers (WebCrypto)
+ *  - AES-GCM encryption
+ *  - PBKDF2 key derivation from passphrase / PIN
+ *  ----------------------------- */
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+function b64(bytes) {
+  return btoa(String.fromCharCode(...bytes));
+}
+function unb64(str) {
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+}
+function randBytes(n) {
+  const a = new Uint8Array(n);
+  crypto.getRandomValues(a);
+  return a;
+}
+
+async function deriveKeyFromSecret(secret, saltBytes, iterations=200000) {
+  const baseKey = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: saltBytes, iterations, hash: "SHA-256" },
+    baseKey,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt","decrypt"]
+  );
+}
+
+async function encryptJson(key, obj) {
+  const iv = randBytes(12);
+  const plaintext = enc.encode(JSON.stringify(obj));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, plaintext));
+  return { ivB64: b64(iv), ctB64: b64(ct) };
+}
+async function decryptJson(key, payload) {
+  const iv = unb64(payload.ivB64);
+  const ct = unb64(payload.ctB64);
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, ct);
+  return JSON.parse(dec.decode(pt));
+}
+
+function loadMeta() {
+  try { return JSON.parse(localStorage.getItem(META_KEY) || "null"); } catch { return null; }
+}
+function saveMeta(meta) {
+  localStorage.setItem(META_KEY, JSON.stringify(meta));
+}
+
+async function saveVault() {
+  if (!state.key || !state.vault) return;
+  const meta = loadMeta();
+  if (!meta?.saltB64) throw new Error("Missing vault meta salt.");
+  const encrypted = await encryptJson(state.key, state.vault);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(encrypted));
+}
+
+async function createNewVault(passphrase) {
+  const salt = randBytes(16);
+  const key = await deriveKeyFromSecret(passphrase, salt);
+  const vault = defaultVault();
+  saveMeta({ saltB64: b64(salt), createdAt: new Date().toISOString() });
+  const encrypted = await encryptJson(key, vault);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(encrypted));
+  state.key = key;
+  state.vault = vault;
+  state.locked = false;
+  state.view = "DASH";
+  applyBranding();
+  render();
+  toast("Vault created + unlocked.");
+}
+
+async function unlockVaultWithPassphrase(passphrase) {
+  const meta = loadMeta();
+  if (!meta?.saltB64) throw new Error("No vault meta found.");
+  const salt = unb64(meta.saltB64);
+  const key = await deriveKeyFromSecret(passphrase, salt);
+  const blob = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+  if (!blob) throw new Error("No vault data found.");
+  const vault = await decryptJson(key, blob);
+  state.key = key;
+  state.vault = vault;
+  state.locked = false;
+  state.view = "DASH";
+  applyBranding();
+  render();
+  toast("Unlocked.");
+}
+
+async function setPin(pin) {
+  // Store a verifier we can decrypt with PIN-derived key. If decrypt works and matches, PIN is correct.
+  // This is not "magic security", it's just practical.
+  const salt = randBytes(16);
+  const key = await deriveKeyFromSecret(pin, salt, 120000);
+  const payload = await encryptJson(key, { ok:true, t: Date.now() });
+  state.vault.settings.pinEnabled = true;
+  state.vault.settings.pinVerifier = { saltB64: b64(salt), ...payload };
+  await saveVault();
+  toast("PIN enabled.");
+}
+
+async function tryUnlockWithPin(pin) {
+  const v = state.vault?.settings?.pinVerifier;
+  if (!v) throw new Error("No PIN verifier.");
+  const salt = unb64(v.saltB64);
+  const key = await deriveKeyFromSecret(pin, salt, 120000);
+  // attempt decrypt verifier
+  await decryptJson(key, {ivB64: v.ivB64, ctB64: v.ctB64});
+  // if success, derive actual vault key from PIN? No. We still need passphrase for real vault.
+  // Practical approach: When unlocked with passphrase, user can enable a "PIN wraps passphrase" scheme.
+  // For MVP: PIN only gates the UI while *key stays in memory* until auto-lock.
+  return true;
+}
+
+/** -----------------------------
+ *  Auto-lock timer
+ *  ----------------------------- */
+let lockTimer = null;
+function armAutoLock() {
+  clearTimeout(lockTimer);
+  if (state.locked) return;
+  const mins = Math.max(1, state.vault?.settings?.autoLockMinutes || 10);
+  lockTimer = setTimeout(() => doLock("Auto-locked."), mins * 60 * 1000);
+}
+["click","keydown","mousemove","touchstart"].forEach(ev => window.addEventListener(ev, armAutoLock, {passive:true}));
+
+function doLock(msg="Locked.") {
+  state.locked = true;
+  state.key = null;
+  state.vault = null;
+  state.view = "LOCK";
+  $("#lockBtn").style.display = "none";
+  $("#vaultState").textContent = "Locked";
+  $("#vaultState").className = "pill";
+  applyBranding(true);
+  render();
+  toast(msg);
+}
+
+/** -----------------------------
+ *  Stealth mode branding
+ *  ----------------------------- */
+function makeFaviconDataURI(type="normal") {
+  // tiny svg favicons as data URI
+  const normal = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+    <defs><radialGradient id="g" cx="30%" cy="20%"><stop offset="0" stop-color="#a5c7ff"/><stop offset="0.35" stop-color="#2b5cff"/><stop offset="1" stop-color="#0c1430"/></radialGradient></defs>
+    <rect rx="16" ry="16" width="64" height="64" fill="url(#g)"/>
+    <circle cx="38" cy="26" r="10" fill="rgba(255,255,255,.25)"/>
+  </svg>`;
+  const stealth = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+    <rect rx="16" ry="16" width="64" height="64" fill="#111827"/>
+    <path d="M18 46h28" stroke="#9aa7b4" stroke-width="6" stroke-linecap="round"/>
+    <path d="M18 34h20" stroke="#9aa7b4" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+    <path d="M18 22h24" stroke="#9aa7b4" stroke-width="6" stroke-linecap="round" opacity="0.75"/>
+  </svg>`;
+  const svg = type==="stealth" ? stealth : normal;
+  return "data:image/svg+xml;base64," + btoa(svg);
+}
+
+function applyBranding(lockedOverride=false) {
+  const stealth = !!(state.vault?.settings?.stealth);
+  const name = stealth ? state.vault.settings.stealthAlias.name : state.vault?.settings?.appAlias?.name || "Mirror";
+  const tag = stealth ? state.vault.settings.stealthAlias.tag : state.vault?.settings?.appAlias?.tag || "CBT conflict resolution. Private by default.";
+  $("#appName").textContent = (lockedOverride ? "Mirror" : name);
+  $("#appTag").textContent = (lockedOverride ? "CBT conflict resolution. Private by default." : tag);
+  document.title = (lockedOverride ? "Mirror" : name);
+  $("#logo").style.background = stealth
+    ? "linear-gradient(180deg,#111827,#0b0f14)"
+    : "radial-gradient(circle at 30% 20%, #a5c7ff, #2b5cff 35%, #0c1430 70%)";
+
+  // favicon
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = makeFaviconDataURI(lockedOverride ? "normal" : (stealth ? "stealth" : "normal"));
+}
+
+/** -----------------------------
+ *  Quick exit
+ *  ----------------------------- */
+$("#quickExitBtn").addEventListener("click", () => {
+  // dump UI quickly to something boring
+  window.location.href = "https://www.bbc.co.uk/weather";
+});
+
+/** -----------------------------
+ *  IDs
+ *  ----------------------------- */
+function uid(prefix="id") {
+  return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
+}
+
+/** -----------------------------
+ *  CBT + Safety Heuristics
+ *  ----------------------------- */
+const Distortions = [
+  { name:"Mind reading", re:/\b(obviously|clearly|i know you|you think|you just want)\b/i, tip:"Stop pretending you can read minds. Ask a direct question or state uncertainty." },
+  { name:"Catastrophizing", re:/\b(it'?s over|ruined|destroyed|never recover|always ends)\b/i, tip:"Scale it. What’s the most likely outcome, not the nightmare outcome?" },
+  { name:"Overgeneralizing", re:/\b(always|never|every time|nothing ever)\b/i, tip:"Swap absolutes for specifics. Use dates/events, not ‘always/never’." },
+  { name:"Labeling", re:/\b(you('?re| are) (selfish|crazy|pathetic|toxic|lazy|disgusting))\b/i, tip:"Attack the behavior, not the person. Labels escalate fights fast." },
+  { name:"Fortune-telling", re:/\b(i know this will|you'?ll just|you will)\b/i, tip:"Predict less. Verify more." },
+  { name:"Should statements", re:/\b(should|must|supposed to)\b/i, tip:"Trade ‘should’ for ‘I’d prefer / I need’ and negotiate realities." },
+];
+
+const ToneFlags = [
+  { name:"Blame language", re:/\b(you made me|your fault|because of you)\b/i },
+  { name:"Ultimatum / threat", re:/\b(i'?m leaving|we'?re done|break up|divorce|i will expose|i will tell your family|i'?ll out you)\b/i },
+  { name:"Contempt / insult", re:/\b(idiot|stupid|ugly|worthless|cunt|bitch|slut|whore)\b/i },
+  { name:"Scorekeeping", re:/\b(after everything i'?ve done|i do everything|you do nothing)\b/i },
+];
+
+const SafetySignals = [
+  { type:"Physical harm threat", re:/\b(hit|punch|slap|kill|choke|hurt you|beat you)\b/i },
+  { type:"Coercive control", re:/\b(tracked your phone|checked your location|wouldn'?t let me leave|blocked the door|took my keys|took my money)\b/i },
+  { type:"Outing threat", re:/\b(i'?ll out you|tell your family you'?re (gay|bi|trans)|expose your sexuality|tell your work)\b/i },
+  { type:"Sexual coercion", re:/\b(forced|made me have sex|coerced|wouldn'?t take no)\b/i },
+];
+
+const BehaviorCatalog = {
+  green: [
+    { k:"usedIStatements", t:"Used 'I feel / I need' language" },
+    { k:"askedClarifying", t:"Asked clarifying questions" },
+    { k:"tookBreakProperly", t:"Took a break with a time to resume" },
+    { k:"apologized", t:"Apologized for tone/impact" },
+  ],
+  yellow: [
+    { k:"broughtOldStuff", t:"Dragged old issues into it" },
+    { k:"stonewalled", t:"Went silent / disengaged without stating a plan" },
+    { k:"sarcasm", t:"Used sarcasm / passive aggression" },
+    { k:"raisedVoice", t:"Raised voice" },
+  ],
+  red: [
+    { k:"insults", t:"Used insults / name-calling" },
+    { k:"threatLeaving", t:"Threatened leaving/breakup to win" },
+    { k:"weaponizedVuln", t:"Used trauma/identity as a weapon" },
+    { k:"outingThreat", t:"Threatened outing / exposure" },
+    { k:"followedAndCornered", t:"Followed/cornered during a pause request" },
+  ]
+};
+
+const FairnessAreas = [
+  "Time & attention","Money","Chores","Emotional support","Intimacy","Decision-making",
+  "Respect/tone","Friends/social life","Family","Outness/visibility","Privacy/phones","Trust/cheating fears","Safety/public PDA"
+];
+
+function analyzeText(text="") {
+  const hits = {
+    distortions: Distortions.filter(d => d.re.test(text)).map(d => ({name:d.name, tip:d.tip})),
+    tone: ToneFlags.filter(t => t.re.test(text)).map(t => t.name),
+    safety: SafetySignals.filter(s => s.re.test(text)).map(s => s.type),
+  };
+  return hits;
+}
+
+function summarizeTheme(intakes) {
+  // crude theme inference: look at fairness areas + common keywords
+  const areas = new Map();
+  const joined = Object.values(intakes).map(i => (i.facts+" "+i.thoughts+" "+i.context)).join(" ").toLowerCase();
+
+  Object.values(intakes).forEach(i => (i.fairnessAreas||[]).forEach(a => areas.set(a,(areas.get(a)||0)+1)));
+
+  const topArea = [...areas.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0] || "Respect/tone";
+  let headline = "You are not fighting about the surface issue. You are fighting about needs and trust colliding.";
+  if (topArea==="Privacy/phones") headline = "You are not fighting about a phone. You are fighting about trust, control, and reassurance.";
+  if (topArea==="Outness/visibility") headline = "You are not fighting about ‘PDA’. You are fighting about safety vs being seen.";
+  if (topArea==="Chores") headline = "You are not fighting about chores. You are fighting about fairness and feeling taken for granted.";
+  if (topArea==="Time & attention") headline = "You are not fighting about a single moment. You are fighting about priority and reassurance.";
+  if (topArea==="Respect/tone") headline = "You are not fighting about the topic. You are fighting about disrespect and emotional safety.";
+  if (joined.includes("ignored") || joined.includes("left on read")) headline = "You are not fighting about messages. You are fighting about felt importance and abandonment alarms.";
+  return { topArea, headline };
+}
+
+function mergeFacts(intakes, userById) {
+  const parts = [];
+  for (const [uid, i] of Object.entries(intakes)) {
+    const name = userById(uid)?.displayName || "Partner";
+    if (i.facts?.trim()) parts.push(`${name}: ${i.facts.trim()}`);
+  }
+  if (!parts.length) return "No facts were provided. That usually means the conflict is running on assumptions. Fix that first.";
+  return parts.join("\n\n");
+}
+
+function scoreBehaviors(beh) {
+  let g=0,y=0,r=0;
+  for (const b of BehaviorCatalog.green) if (beh?.[b.k]) g++;
+  for (const b of BehaviorCatalog.yellow) if (beh?.[b.k]) y++;
+  for (const b of BehaviorCatalog.red) if (beh?.[b.k]) r++;
+  return {g,y,r, score: (g*2) - (y*1) - (r*3)};
+}
+
+function buildNonNegotiables(intakes) {
+  const rules = [];
+  for (const i of Object.values(intakes)) {
+    const b = i.behaviors || {};
+    if (b.threatLeaving) rules.push("Stop using threats of leaving/breakup as a weapon. It destroys safety and turns conflict into survival mode.");
+    if (b.insults) rules.push("No insults or name-calling. Attack the issue, not the person.");
+    if (b.weaponizedVuln) rules.push("Do not use trauma/identity/vulnerabilities as ammo. That’s cruelty, not communication.");
+    if (b.outingThreat) rules.push("Never threaten outing or exposure. That is abusive.");
+    if (b.followedAndCornered) rules.push("If someone requests space, do not follow/corner them. Agree a return time instead.");
+  }
+  return [...new Set(rules)];
+}
+
+function generateAnalysis(relationship, users, intakes) {
+  const userById = (id) => users.find(u => u.id === id);
+
+  const perPartner = {};
+  let safetyFindings = [];
+  let toneAll = [];
+  let distortAll = [];
+  for (const [pid, i] of Object.entries(intakes)) {
+    const text = `${i.facts||""}\n${i.thoughts||""}\n${i.context||""}`;
+    const hits = analyzeText(text);
+    safetyFindings = safetyFindings.concat(hits.safety.map(s => ({partnerId: pid, type:s})));
+    toneAll = toneAll.concat(hits.tone.map(t => ({partnerId: pid, type:t})));
+    distortAll = distortAll.concat(hits.distortions.map(d => ({partnerId: pid, ...d})));
+
+    const s = scoreBehaviors(i.behaviors||{});
+    perPartner[pid] = {
+      partnerId: pid,
+      name: userById(pid)?.displayName || "Partner",
+      behaviorsScore: s,
+      green: BehaviorCatalog.green.filter(b => i.behaviors?.[b.k]).map(b => b.t),
+      yellow: BehaviorCatalog.yellow.filter(b => i.behaviors?.[b.k]).map(b => b.t),
+      red: BehaviorCatalog.red.filter(b => i.behaviors?.[b.k]).map(b => b.t),
+      distortions: hits.distortions,
+      toneFlags: hits.tone,
+      fairnessAreas: i.fairnessAreas || [],
+      feelings: i.emotions || []
+    };
+  }
+
+  const theme = summarizeTheme(intakes);
+  const nonneg = buildNonNegotiables(intakes);
+  const factsMerged = mergeFacts(intakes, userById);
+
+  const safetyPivot = safetyFindings.length > 0 || nonneg.some(r => r.toLowerCase().includes("abusive"));
+
+  // pattern inference (lightweight)
+  let pattern = "Escalation loop: assumptions → emotion spike → reactive behavior → repair attempt (or not) → resentment stored.";
+  const a = Object.values(intakes).map(i => (i.fairnessAreas||[])).flat();
+  if (a.includes("Outness/visibility")) pattern = "Safety vs visibility tension (common in LGBTQ+ / minority-stress contexts).";
+  if (toneAll.some(t => t.type==="Ultimatum / threat") && toneAll.some(t => t.type==="Blame language")) pattern = "Pursue–withdraw loop: one pushes harder, the other defends/escapes, both feel unsafe.";
+  if (a.includes("Privacy/phones")) pattern = "Trust-control spiral: reassurance demands → privacy resistance → suspicion → tighter control.";
+
+  const coupleSummary = {
+    headline: theme.headline,
+    neutralFacts: factsMerged,
+    pattern,
+    topArea: theme.topArea
+  };
+
+  return {
+    createdAt: new Date().toISOString(),
+    safetyPivot,
+    safetyFindings,
+    coupleSummary,
+    perPartner,
+    toneAll,
+    distortAll,
+    nonNegotiables: nonneg,
+    bluntTruths: buildBluntTruths(perPartner, relationship, theme),
+    repairs: buildRepairScripts(perPartner),
+    boundaryTips: buildBoundaryTips(theme, nonneg),
+  };
+}
+
+function buildBluntTruths(perPartner, relationship, theme) {
+  const arr = [];
+  const partners = Object.values(perPartner);
+  if (partners.length === 2) {
+    const [p1,p2] = partners.sort((a,b)=>b.behaviorsScore.score-a.behaviorsScore.score);
+    arr.push(`Main theme: ${theme.topArea}. If you avoid that topic, you will keep re-fighting the same fight in different costumes.`);
+    arr.push(`${p1.name} is currently showing relatively more repair/fair behavior in this session (not “perfect”, just less damaging).`);
+    arr.push(`${p2.name} has more escalation signals in this session. That doesn’t mean they're “bad”. It does mean their current behaviors are making resolution harder.`);
+  } else {
+    arr.push(`Main theme: ${theme.topArea}. Focus on the pattern, not the storyline.`);
+  }
+  arr.push("Facts matter. Assumptions feel real, but they are not evidence.");
+  arr.push("Your nervous systems are steering the car. If you don’t slow the body down, the conversation will stay stupid.");
+  return arr;
+}
+
+function buildRepairScripts(perPartner) {
+  const scripts = {};
+  for (const p of Object.values(perPartner)) {
+    scripts[p.partnerId] = [
+      "What I did (specific behavior): ____",
+      "Impact on you (how it landed): ____",
+      "What I understand now (your need / fear): ____",
+      "What I’ll do differently next time (one concrete action): ____",
+      "What I’m asking from you (one clear request): ____"
+    ];
+  }
+  return scripts;
+}
+
+function buildBoundaryTips(theme, nonneg) {
+  const tips = [];
+  tips.push("When you request a break, give a return time. ‘I’m overwhelmed, 20 minutes, then we resume’ beats disappearing.");
+  tips.push("One topic at a time. If you bring old issues in mid-argument, you’re not solving anything, you’re winning points.");
+  if (theme.topArea==="Privacy/phones") tips.push("Agree privacy rules explicitly: what’s private, what’s shared, and what’s reassurance. Guessing creates paranoia.");
+  if (theme.topArea==="Outness/visibility") tips.push("Safety boundaries and visibility needs are both real. Treat it as a joint problem, not a moral failure.");
+  if (nonneg.length) tips.push("Non-negotiables are not suggestions. If you cross them, resolution pauses and safety takes priority.");
+  return tips;
+}
+
+/** -----------------------------
+ *  Render helpers
+ *  ----------------------------- */
+function setVaultBadge() {
+  const pill = $("#vaultState");
+  if (state.locked) {
+    pill.textContent = "Locked";
+    pill.className = "pill";
+  } else {
+    pill.textContent = "Unlocked";
+    pill.className = "pill";
+  }
+  $("#lockBtn").style.display = state.locked ? "none" : "inline-flex";
+}
+
+function navItem(name, view, disabled=false, badge=null) {
+  const b = badge ? ` <span class="badge ${badge.cls||""}">${badge.txt}</span>` : "";
+  const btn = el("button", { class:"btn", style:"width:100%; justify-content:space-between", disabled, onclick:()=>go(view) }, [
+    el("span", { html: `<span>${name}</span>${b}` })
+  ]);
+  return btn;
+}
+
+function go(view) {
+  state.view = view;
+  render();
+}
+
+function currentRelationship() {
+  return state.vault?.relationships?.find(r => r.id === state.selected.relationshipId) || null;
+}
+
+function userById(id){ return state.vault.users.find(u=>u.id===id);}
+
+/** -----------------------------
+ *  Main render router
+ *  ----------------------------- */
+function render() {
+  setVaultBadge();
+  armAutoLock();
+  const nav = $("#nav");
+  nav.innerHTML = "";
+
+  if (state.locked) {
+    $("#navHint").textContent = "Unlock to use the app.";
+    nav.append(navItem("Unlock / Create Vault", "LOCK", false));
+  } else {
+    $("#navHint").textContent = "Local encrypted vault. Nothing leaves your device.";
+    nav.append(
+      navItem("Dashboard", "DASH"),
+      navItem("Onboarding (Users)", "USERS"),
+      navItem("Relationships", "RELS"),
+      navItem("New Conflict Session", "NEW_CONFLICT"),
+      navItem("History", "HISTORY"),
+      navItem("Settings", "SETTINGS"),
+    );
+  }
+
+  const main = $("#main");
+  main.innerHTML = "";
+  if (state.view === "LOCK") main.append(renderLock());
+  else if (state.view === "DASH") main.append(renderDash());
+  else if (state.view === "USERS") main.append(renderUsers());
+  else if (state.view === "RELS") main.append(renderRels());
+  else if (state.view === "NEW_USER") main.append(renderNewUser());
+  else if (state.view === "NEW_REL") main.append(renderNewRel());
+  else if (state.view === "NEW_CONFLICT") main.append(renderNewConflict());
+  else if (state.view === "INTAKE") main.append(renderIntake());
+  else if (state.view === "REPORT") main.append(renderReport());
+  else if (state.view === "HISTORY") main.append(renderHistory());
+  else if (state.view === "SETTINGS") main.append(renderSettings());
+  else if (state.view === "SAFETY") main.append(renderSafety());
+  else main.append(el("div",{class:"muted", html:"Unknown view."}));
+
+  applyBranding();
+}
+
+/** -----------------------------
+ *  Views
+ *  ----------------------------- */
+function renderLock() {
+  const hasVault = !!localStorage.getItem(STORAGE_KEY);
+  const box = el("div",{},[
+    el("h2",{html:"Vault Lock"}),
+    el("div",{class:"muted", html:
+      "Everything is stored <b>encrypted</b> on this device. No servers. No accounts. No ‘oops we trained on your trauma logs’.<br><br>" +
+      (hasVault ? "Enter your vault <b>passphrase</b> to unlock." : "No vault found. Create one.")
+    }),
+    el("div",{class:"hr"}),
+  ]);
+
+  const pass = el("input",{type:"password", placeholder:"Vault passphrase"});
+  const pin = el("input",{type:"password", placeholder:"Optional: PIN (only works after unlock + enable)"});
+
+  const actions = el("div",{class:"row"},[]);
+  if (hasVault) {
+    actions.append(
+      el("button",{class:"btn primary", onclick:async()=>{
+        try {
+          await unlockVaultWithPassphrase(pass.value);
+        } catch (e) {
+          toast("Unlock failed. Wrong passphrase?");
+        }
+      }},[document.createTextNode("Unlock")]),
+      el("button",{class:"btn", onclick:()=>{
+        pass.value = "";
+        toast("If you forgot the passphrase, the vault is unrecoverable. That’s the point.");
+      }},[document.createTextNode("Forgot?")]),
+    );
+  } else {
+    actions.append(
+      el("button",{class:"btn primary", onclick:async()=>{
+        if (pass.value.trim().length < 10) return toast("Use a longer passphrase (10+ chars).");
+        await createNewVault(pass.value.trim());
+      }},[document.createTextNode("Create Vault")])
+    );
+  }
+
+  // Lock/unlock UI
+  box.append(
+    el("label",{html:"Passphrase"}),
+    pass,
+    el("div",{class:"hint", html:"Tip: use a sentence. Long beats complex."}),
+    el("div",{class:"hr"}),
+    actions
+  );
+
+  // If vault exists, show harsh reality
+  if (hasVault) {
+    box.append(el("div",{class:"dangerBox", html:
+      "<b>Reality:</b> If you lose the passphrase, nobody (including me) can recover the data. " +
+      "That’s what ‘privacy-first’ means when it’s not marketing."
+    }));
+  }
+
+  return box;
+}
+
+function renderDash() {
+  const v = state.vault;
+  const rel = currentRelationship();
+  const kpis = el("div",{class:"kpi"},[
+    el("div",{class:"k"},[el("div",{class:"n", html:String(v.users.length)}), el("div",{class:"l", html:"Users"})]),
+    el("div",{class:"k"},[el("div",{class:"n", html:String(v.relationships.length)}), el("div",{class:"l", html:"Relationships"})]),
+    el("div",{class:"k"},[el("div",{class:"n", html:String(v.conflicts.length)}), el("div",{class:"l", html:"Conflict sessions"})]),
+  ]);
+
+  const c = el("div",{},[
+    el("h2",{html:"Dashboard"}),
+    el("div",{class:"muted", html:
+      "This MVP is blunt on purpose: it calls out behaviors, distortions, and fairness issues without picking a favorite human."
+    }),
+    el("div",{class:"hr"}),
+    kpis,
+    el("div",{class:"hr"}),
+    el("div",{class:"goodBox", html:
+      "<b>How to get value fast:</b> Create 2 users, create a relationship, run one conflict session. The engine will generate a couple-summary + private feedback."
+    }),
+    el("div",{class:"hr"}),
+    el("div",{class:"row"},[
+      el("button",{class:"btn primary", onclick:()=>go("NEW_CONFLICT")},[document.createTextNode("Start Conflict Session")]),
+      el("button",{class:"btn", onclick:()=>go("USERS")},[document.createTextNode("Add / Edit Users")]),
+      el("button",{class:"btn", onclick:()=>go("RELS")},[document.createTextNode("Relationships")])
+    ])
+  ]);
+
+  return c;
+}
+
+function renderUsers() {
+  const v = state.vault;
+  const box = el("div",{},[
+    el("h2",{html:"Users"}),
+    el("div",{class:"muted", html:"Add each partner here. You can store pronouns, culture, outness stressors, triggers, and conflict style."}),
+    el("div",{class:"hr"}),
+    el("div",{class:"row"},[
+      el("button",{class:"btn primary", onclick:()=>go("NEW_USER")},[document.createTextNode("Add User")]),
+    ]),
+    el("div",{class:"hr"}),
+  ]);
+
+  const list = el("div",{class:"list"},[]);
+  for (const u of v.users) {
+    list.append(el("div",{class:"item"},[
+      el("div",{},[
+        el("div",{html:`<b>${escapeHtml(u.displayName||"(no name)")}</b> <span class="small">${escapeHtml(u.pronouns||"")}</span>`}),
+        el("div",{class:"small", html:`${escapeHtml(u.genderIdentity||"")} · ${escapeHtml(u.sexualOrientation||"")} · ${escapeHtml((u.languages||[]).join(", "))}`})
+      ]),
+      el("div",{class:"inline"},[
+        el("button",{class:"btn", onclick:()=>editUser(u.id)},[document.createTextNode("Edit")]),
+        el("button",{class:"btn danger", onclick:()=>deleteUser(u.id)},[document.createTextNode("Delete")]),
+      ])
+    ]));
+  }
+  if (!v.users.length) list.append(el("div",{class:"muted", html:"No users yet. Add two users to start."}));
+
+  box.append(list);
+  return box;
+}
+
+function renderNewUser() {
+  const v = state.vault;
+  const editingId = state._editingUserId || null;
+  const existing = editingId ? v.users.find(u=>u.id===editingId) : null;
+
+  const box = el("div",{},[
+    el("h2",{html: existing ? "Edit User" : "New User"}),
+    el("div",{class:"muted", html:"Keep it lightweight. This is not diagnosing anyone, it’s building context so conflicts get interpreted realistically."}),
+    el("div",{class:"hr"}),
+  ]);
+
+  const f = {
+    displayName: input(existing?.displayName || ""),
+    pronouns: input(existing?.pronouns || ""),
+    genderIdentity: input(existing?.genderIdentity || ""),
+    sexualOrientation: input(existing?.sexualOrientation || ""),
+    age: input(existing?.age || ""),
+    location: input(existing?.location || ""),
+    culture: input(existing?.cultureBackground || ""),
+    religion: input(existing?.religionSpirituality || ""),
+    languages: input((existing?.languages||[]).join(", ")),
+    attachment: select(["secure","anxious","avoidant","disorganized"], existing?.attachmentStyle || "secure"),
+    conflictStyle: select(["fight","flight","freeze","fawn"], existing?.conflictStyle || "fight"),
+    outness: select(["not out","partially out","out to friends","out to family","out at work","fully out"], existing?.outnessLevel || "partially out"),
+    stressors: textarea(existing?.currentStressors || ""),
+    triggers: textarea((existing?.triggers||[]).join("\n")),
+    coreBeliefs: textarea((existing?.coreBeliefs||[]).join("\n")),
+  };
+
+  box.append(
+    formRow("Display name", f.displayName),
+    formRow("Pronouns", f.pronouns),
+    el("div",{class:"split"},[
+      formRow("Gender identity", f.genderIdentity),
+      formRow("Sexual orientation", f.sexualOrientation),
+    ]),
+    el("div",{class:"split"},[
+      formRow("Age (optional)", f.age),
+      formRow("Location (optional)", f.location),
+    ]),
+    formRow("Cultural background", f.culture),
+    formRow("Religion / spirituality (optional)", f.religion),
+    formRow("Languages (comma separated)", f.languages),
+    el("div",{class:"split"},[
+      formRow("Attachment style (light indicator)", f.attachment),
+      formRow("Conflict style", f.conflictStyle),
+    ]),
+    formRow("Outness level (safety/visibility context)", f.outness),
+    formRow("Current stressors (work, money, family, health)", f.stressors),
+    formRow("Trigger library (one per line)", f.triggers),
+    formRow("Core beliefs (one per line)", f.coreBeliefs),
+    el("div",{class:"hr"}),
+    el("div",{class:"row"},[
+      el("button",{class:"btn primary", onclick:async()=>{
+        const u = {
+          id: existing?.id || uid("user"),
+          displayName: f.displayName.value.trim() || "Unnamed",
+          pronouns: f.pronouns.value.trim(),
+          genderIdentity: f.genderIdentity.value.trim(),
+          sexualOrientation: f.sexualOrientation.value.trim(),
+          age: f.age.value.trim(),
+          location: f.location.value.trim(),
+          cultureBackground: f.culture.value.trim(),
+          religionSpirituality: f.religion.value.trim(),
+          languages: f.languages.value.split(",").map(s=>s.trim()).filter(Boolean),
+          attachmentStyle: f.attachment.value,
+          conflictStyle: f.conflictStyle.value,
+          outnessLevel: f.outness.value,
+          currentStressors: f.stressors.value.trim(),
+          triggers: f.triggers.value.split("\n").map(s=>s.trim()).filter(Boolean),
+          coreBeliefs: f.coreBeliefs.value.split("\n").map(s=>s.trim()).filter(Boolean),
+          createdAt: existing?.createdAt || new Date().toISOString()
+        };
+        if (existing) {
+          const idx = v.users.findIndex(x=>x.id===existing.id);
+          v.users[idx] = u;
+        } else {
+          v.users.push(u);
+        }
+        state._editingUserId = null;
+        await saveVault();
+        go("USERS");
+        toast("Saved.");
+      }},[document.createTextNode("Save User")]),
+      el("button",{class:"btn", onclick:()=>{
+        state._editingUserId = null;
+        go("USERS");
+      }},[document.createTextNode("Cancel")]),
+    ])
+  );
+
+  return box;
+}
+
+function renderRels() {
+  const v = state.vault;
+  const box = el("div",{},[
+    el("h2",{html:"Relationships"}),
+    el("div",{class:"muted", html:"Create a relationship, attach partners, track rules + agreements, then run conflict sessions against it."}),
+    el("div",{class:"hr"}),
+    el("div",{class:"row"},[
+      el("button",{class:"btn primary", onclick:()=>go("NEW_REL")},[document.createTextNode("Create Relationship")]),
+    ]),
+    el("div",{class:"hr"}),
+  ]);
+
+  const list = el("div",{class:"list"},[]);
+  for (const r of v.relationships) {
+    const members = r.memberIds.map(id=>userById(id)?.displayName||"Unknown").join(" + ");
+    const isSelected = state.selected.relationshipId === r.id;
+    list.append(el("div",{class:"item"},[
+      el("div",{},[
+        el("div",{html:`<b>${escapeHtml(r.name||"Relationship")}</b> ${isSelected?'<span class="badge bG">Selected</span>':''}`}),
+        el("div",{class:"small", html:`${escapeHtml(members)} · ${escapeHtml(r.structure||"")} · ${escapeHtml(r.status||"")}`})
+      ]),
+      el("div",{class:"inline"},[
+        el("button",{class:"btn good", onclick:()=>{ state.selected.relationshipId = r.id; saveVault(); render(); toast("Relationship selected."); }},[document.createTextNode("Select")]),
+        el("button",{class:"btn", onclick:()=>editRel(r.id)},[document.createTextNode("Edit")]),
+        el("button",{class:"btn danger", onclick:()=>deleteRel(r.id)},[document.createTextNode("Delete")]),
+      ])
+    ]));
+  }
+  if (!v.relationships.length) list.append(el("div",{class:"muted", html:"No relationships yet. Create one after adding users."}));
+
+  box.append(list);
+  return box;
+}
+
+function renderNewRel() {
+  const v = state.vault;
+  const editingId = state._editingRelId || null;
+  const existing = editingId ? v.relationships.find(r=>r.id===editingId) : null;
+
+  const box = el("div",{},[
+    el("h2",{html: existing ? "Edit Relationship" : "New Relationship"}),
+    el("div",{class:"muted", html:"MVP assumes 2 partners. Poly/ENM expansion later is straightforward structurally."}),
+    el("div",{class:"hr"}),
+  ]);
+
+  if (v.users.length < 2) {
+    box.append(el("div",{class:"warnBox", html:"You need at least <b>2 users</b> first. Go create them."}));
+    box.append(el("div",{class:"hr"}));
+  }
+
+  const name = input(existing?.name || "");
+  const structure = select(["monogamous","open","ENM","poly (later)"], existing?.structure || "monogamous");
+  const status = select(["dating","partnered","married","long-distance","separating"], existing?.status || "dating");
+  const duration = input(existing?.durationMonths || "");
+  const outness = select(["not out","partially out","mixed (different levels)","fully out"], existing?.outnessLevel || "partially out");
+
+  const memberA = select(v.users.map(u=>u.id), existing?.memberIds?.[0] || v.users[0]?.id || "");
+  const memberB = select(v.users.map(u=>u.id), existing?.memberIds?.[1] || v.users[1]?.id || "");
+  memberA._render = () => v.users.map(u=>({value:u.id,label:u.displayName}));
+  memberB._render = () => v.users.map(u=>({value:u.id,label:u.displayName}));
+
+  const rules = textarea((existing?.rules||[]).join("\n"));
+  const agreements = textarea((existing?.agreements||[]).join("\n"));
+
+  box.append(
+    formRow("Relationship name", name),
+    el("div",{class:"split"},[
+      formRow("Structure", structure),
+      formRow("Status", status),
+    ]),
+    el("div",{class:"split"},[
+      formRow("Duration (months)", duration),
+      formRow("Outness level", outness),
+    ]),
+    el("div",{class:"split"},[
+      formRow("Partner A", memberA, {labels: memberA._render()}),
+      formRow("Partner B", memberB, {labels: memberB._render()}),
+    ]),
+    formRow("Relationship Rules (one per line)", rules),
+    formRow("Micro-agreements (one per line)", agreements),
+    el("div",{class:"hr"}),
+    el("div",{class:"row"},[
+      el("button",{class:"btn primary", onclick:async()=>{
+        const a = memberA.value, b = memberB.value;
+        if (!a || !b || a===b) return toast("Select two different partners.");
+        const rel = {
+          id: existing?.id || uid("rel"),
+          name: name.value.trim() || "Relationship",
+          structure: structure.value,
+          status: status.value,
+          durationMonths: duration.value.trim(),
+          outnessLevel: outness.value,
+          memberIds: [a,b],
+          rules: rules.value.split("\n").map(s=>s.trim()).filter(Boolean),
+          agreements: agreements.value.split("\n").map(s=>s.trim()).filter(Boolean),
+          createdAt: existing?.createdAt || new Date().toISOString()
+        };
+        if (existing) {
+          const idx = v.relationships.findIndex(x=>x.id===existing.id);
+          v.relationships[idx] = rel;
+        } else {
+          v.relationships.push(rel);
+          state.selected.relationshipId = rel.id;
+        }
+        state._editingRelId = null;
+        await saveVault();
+        go("RELS");
+        toast("Saved relationship.");
+      }},[document.createTextNode("Save Relationship")]),
+      el("button",{class:"btn", onclick:()=>{
+        state._editingRelId = null;
+        go("RELS");
+      }},[document.createTextNode("Cancel")]),
+    ])
+  );
+
+  return box;
+}
+
+function renderNewConflict() {
+  const v = state.vault;
+  const rel = currentRelationship();
+
+  const box = el("div",{},[
+    el("h2",{html:"New Conflict Session"}),
+    el("div",{class:"muted", html:"Each partner completes a private intake. The app generates a couple summary + private feedback. No one sees raw private text unless you choose to share it."}),
+    el("div",{class:"hr"}),
+  ]);
+
+  if (!rel) {
+    box.append(el("div",{class:"warnBox", html:"Select a relationship first (Relationships → Select)."}));
+    return box;
+  }
+
+  const mode = select(["asynchronous","live (same device sequential)"], "asynchronous");
+  const outcome = select(["understanding","compromise","clarity","separation"], "understanding");
+  const willing = select(["yes","not sure","no"], "yes");
+
+  box.append(
+    el("div",{class:"goodBox", html:`<b>Selected:</b> ${escapeHtml(rel.name)} · ${escapeHtml(rel.structure)} · ${escapeHtml(rel.status)}`}),
+    el("div",{class:"hr"}),
+    el("div",{class:"split"},[
+      formRow("Mode", mode),
+      formRow("Desired outcome", outcome),
+    ]),
+    formRow("Are you both willing to work on this?", willing),
+    el("div",{class:"hr"}),
+    el("button",{class:"btn primary", onclick:async()=>{
+      const conflict = {
+        id: uid("conf"),
+        relationshipId: rel.id,
+        createdAt: new Date().toISOString(),
+        mode: mode.value,
+        outcome: outcome.value,
+        willing: willing.value,
+        partnerIntakes: {}, // partnerId -> intake
+        analysis: null
+      };
+      v.conflicts.push(conflict);
+      state.selected.conflictId = conflict.id;
+      // start intake with first partner
+      state.selected.activePartnerId = rel.memberIds[0];
+      await saveVault();
+      state.view = "INTAKE";
+      render();
+    }},[document.createTextNode("Start Intake (Partner A)")])
+  );
+
+  return box;
+}
+
+function renderIntake() {
+  const v = state.vault;
+  const rel = currentRelationship();
+  const conflict = v.conflicts.find(c=>c.id===state.selected.conflictId);
+  const partnerId = state.selected.activePartnerId;
+  const partner = userById(partnerId);
+
+  const box = el("div",{},[
+    el("h2",{html:`Private Intake: ${escapeHtml(partner?.displayName||"Partner")}`}),
+    el("div",{class:"muted", html:"Be factual first. Opinions come later. This reduces mind-reading and nonsense."}),
+    el("div",{class:"hr"}),
+  ]);
+
+  if (!rel || !conflict) {
+    box.append(el("div",{class:"warnBox", html:"Missing relationship/conflict. Go back to New Conflict Session."}));
+    return box;
+  }
+
+  const existing = conflict.partnerIntakes[partnerId] || {};
+
+  const facts = textarea(existing.facts || "");
+  const thoughts = textarea(existing.thoughts || "");
+  const emotions = textarea((existing.emotions||[]).map(e=>`${e.name}:${e.intensity}`).join("\n"));
+  const behaviors = existing.behaviors || {};
+
+  const fairness = multiSelect(FairnessAreas, existing.fairnessAreas || []);
+  const context = textarea(existing.context || "");
+
+  // behavior checkboxes
+  const behBox = el("div",{},[
+    el("div",{class:"muted", html:"Behaviors (check what applies in this conflict):"}),
+    el("div",{class:"hr"}),
+    el("div",{class:"muted", html:"<b>Green</b> (helps resolution)"}),
+    renderChecks(BehaviorCatalog.green, behaviors),
+    el("div",{class:"muted", html:"<b>Yellow</b> (repairable, but not great)"}),
+    renderChecks(BehaviorCatalog.yellow, behaviors),
+    el("div",{class:"muted", html:"<b>Red</b> (non-negotiable to stop)"}),
+    renderChecks(BehaviorCatalog.red, behaviors),
+  ]);
+
+  // speech-to-text for facts/thoughts/context
+  const sttRow = el("div",{class:"row"},[
+    el("button",{class:"btn", onclick:()=>startSTT(facts)},[document.createTextNode("🎙️ Speak → Facts")]),
+    el("button",{class:"btn", onclick:()=>startSTT(thoughts)},[document.createTextNode("🎙️ Speak → Thoughts")]),
+    el("button",{class:"btn", onclick:()=>startSTT(context)},[document.createTextNode("🎙️ Speak → Context")]),
+    el("span",{class:"muted", html:"(Speech-to-text only works if your browser supports it.)"})
+  ]);
+
+  box.append(
+    formRow("1) Facts (what happened, no opinions)", facts),
+    sttRow,
+    formRow("2) Interpretations / thoughts (what you assumed it meant)", thoughts),
+    formRow("3) Emotions (one per line like: anger:7)", emotions),
+    behBox,
+    el("div",{class:"hr"}),
+    el("div",{class:"muted", html:"5) Fairness perception areas (select what felt unfair/unclear):"}),
+    fairness.node,
+    formRow("6) Context (stress, trauma activation, culture, safety, exhaustion)", context),
+    el("div",{class:"hr"}),
+  );
+
+  // buttons: save intake, next partner / analyze
+  const hasA = !!conflict.partnerIntakes[rel.memberIds[0]];
+  const hasB = !!conflict.partnerIntakes[rel.memberIds[1]];
+
+  box.append(el("div",{class:"row"},[
+    el("button",{class:"btn primary", onclick:async()=>{
+      const intake = {
+        facts: facts.value.trim(),
+        thoughts: thoughts.value.trim(),
+        emotions: parseEmotions(emotions.value),
+        behaviors: readBehaviors(behBox),
+        fairnessAreas: fairness.get(),
+        context: context.value.trim()
+      };
+      conflict.partnerIntakes[partnerId] = intake;
+
+      // Safety screening immediately
+      const text = `${intake.facts}\n${intake.thoughts}\n${intake.context}`;
+      const hits = analyzeText(text);
+      if (hits.safety.length) {
+        conflict.analysis = generateAnalysis(rel, v.users, conflict.partnerIntakes);
+        await saveVault();
+        state.view = "SAFETY";
+        render();
+        toast("Safety flags detected. Pivoting.");
+        return;
+      }
+
+      await saveVault();
+      toast("Saved intake.");
+
+      const nextPartner = (partnerId === rel.memberIds[0]) ? rel.memberIds[1] : null;
+      if (nextPartner) {
+        state.selected.activePartnerId = nextPartner;
+        render();
+      } else {
+        // both done, analyze
+        conflict.analysis = generateAnalysis(rel, v.users, conflict.partnerIntakes);
+        await saveVault();
+        state.view = conflict.analysis.safetyPivot ? "SAFETY" : "REPORT";
+        render();
+      }
+    }},[document.createTextNode("Save + Continue")]),
+    el("button",{class:"btn", onclick:()=>go("DASH")},[document.createTextNode("Exit to Dashboard")]),
+  ]));
+
+  const status = el("div",{class:"hint", html:
+    `Progress: A=${hasA?"✅":"⬜"} · B=${hasB?"✅":"⬜"}`
+  });
+  box.append(status);
+
+  return box;
+}
+
+function renderSafety() {
+  const v = state.vault;
+  const rel = currentRelationship();
+  const conflict = v.conflicts.find(c=>c.id===state.selected.conflictId);
+
+  const box = el("div",{},[
+    el("h2",{html:"Safety Pivot (Not a standard ‘conflict’)" }),
+    el("div",{class:"dangerBox", html:
+      "<b>This looks like it may include coercion, threats, violence, or outing risk.</b><br>" +
+      "That changes the job. The priority is safety, not ‘communication skills’."
+    }),
+    el("div",{class:"hr"}),
+  ]);
+
+  const findings = conflict?.analysis?.safetyFindings || [];
+  if (findings.length) {
+    const items = findings.map(f => `• ${escapeHtml(userById(f.partnerId)?.displayName||"Partner")}: ${escapeHtml(f.type)}`).join("<br>");
+    box.append(el("div",{class:"warnBox", html:`<b>Detected signals:</b><br>${items}`}));
+  }
+
+  box.append(
+    el("div",{class:"hr"}),
+    el("div",{class:"muted", html:
+      "<b>What this app will tell you (bluntly):</b><br>" +
+      "• Threats, coercion, violence, or outing risk are not ‘relationship problems’. They’re safety problems.<br>" +
+      "• If either person is unsafe, do not do live conflict sessions. Get support and make a safety plan."
+    }),
+    el("div",{class:"hr"}),
+    el("div",{class:"goodBox", html:
+      "<b>UK resources:</b><br>" +
+      "• Samaritans (24/7 listening): <a target='_blank' rel='noreferrer' href='https://www.samaritans.org/how-we-can-help/contact-samaritan/talk-us-phone/'>samaritans.org</a><br>" +
+      "• NHS 111: <a target='_blank' rel='noreferrer' href='https://www.nhs.uk/nhs-services/urgent-and-emergency-care-services/when-to-use-111/'>nhs.uk</a><br>" +
+      "• Refuge National Domestic Abuse Helpline: <a target='_blank' rel='noreferrer' href='https://refuge.org.uk/i-need-help-now/how-we-can-help-you/national-domestic-abuse-helpline/'>refuge.org.uk</a><br>" +
+      "• Galop LGBT+ anti-abuse helpline: <a target='_blank' rel='noreferrer' href='https://www.galop.org.uk/contact-us'>galop.org.uk</a><br>" +
+      "<br><b>If you are in immediate danger:</b> call your local emergency number."
+    }),
+    el("div",{class:"hr"}),
+    el("div",{class:"row"},[
+      el("button",{class:"btn", onclick:()=>go("HISTORY")},[document.createTextNode("Go to History")]),
+      el("button",{class:"btn primary", onclick:()=>{
+        // allow viewing report but keep framed
+        state.view = "REPORT";
+        render();
+      }},[document.createTextNode("View Report (with caution)")]),
+    ])
+  );
+
+  return box;
+}
+
+function renderReport() {
+  const v = state.vault;
+  const rel = currentRelationship();
+  const conflict = v.conflicts.find(c=>c.id===state.selected.conflictId);
+  const analysis = conflict?.analysis;
+
+  const box = el("div",{},[
+    el("h2",{html:"Conflict Report"}),
+    el("div",{class:"muted", html:"Shareable couple summary + private partner feedback. Blunt about behaviors, not identity."}),
+    el("div",{class:"hr"}),
+  ]);
+
+  if (!analysis) {
+    box.append(el("div",{class:"warnBox", html:"No analysis found. Complete both intakes first."}));
+    return box;
+  }
+
+  // Couple summary
+  box.append(
+    el("div",{class:"card", style:"padding:12px"},[
+      el("h2",{html:"Couple Summary"}),
+      el("div",{class:"goodBox", html:`<b>${escapeHtml(analysis.coupleSummary.headline)}</b>`}),
+      el("div",{class:"hr"}),
+      el("div",{class:"muted", html:`<b>Pattern detected:</b> ${escapeHtml(analysis.coupleSummary.pattern)}`}),
+      el("div",{class:"hr"}),
+      el("label",{html:"Neutral facts summary (combined)"}),
+      el("textarea",{readonly:true},[]),
+    ])
+  );
+  box.querySelector("textarea[readonly]").value = analysis.coupleSummary.neutralFacts;
+
+  // Blunt truths
+  box.append(el("div",{class:"hr"}));
+  box.append(el("div",{class:"warnBox", html:`<b>Blunt truths (because you asked):</b><br>${analysis.bluntTruths.map(t=>"• "+escapeHtml(t)).join("<br>")}`}));
+
+  // Non-negotiables
+  if (analysis.nonNegotiables?.length) {
+    box.append(el("div",{class:"hr"}));
+    box.append(el("div",{class:"dangerBox", html:`<b>Non-negotiables to stop:</b><br>${analysis.nonNegotiables.map(t=>"• "+escapeHtml(t)).join("<br>")}`}));
+  }
+
+  // Partner sections
+  box.append(el("div",{class:"hr"}));
+  for (const p of Object.values(analysis.perPartner)) {
+    const fairness = p.fairnessAreas.length ? p.fairnessAreas.map(a=>`<span class="badge">${escapeHtml(a)}</span>`).join(" ") : "<span class='small'>None selected</span>";
+    const d = p.distortions?.length ? p.distortions.map(x=>`• <b>${escapeHtml(x.name)}:</b> ${escapeHtml(x.tip)}`).join("<br>") : "• None detected from text (or you were unusually careful, congrats).";
+
+    const green = p.green.length ? p.green.map(x=>"• "+escapeHtml(x)).join("<br>") : "• (none checked)";
+    const yellow = p.yellow.length ? p.yellow.map(x=>"• "+escapeHtml(x)).join("<br>") : "• (none checked)";
+    const red = p.red.length ? p.red.map(x=>"• "+escapeHtml(x)).join("<br>") : "• (none checked)";
+
+    box.append(el("div",{class:"card", style:"padding:12px; margin-top:12px"},[
+      el("h2",{html:`Private Feedback: ${escapeHtml(p.name)}`}),
+      el("div",{class:"muted", html:`Behavior score: <span class="mono">${p.behaviorsScore.score}</span> (Green +2, Yellow −1, Red −3)`}),
+      el("div",{class:"hr"}),
+      el("div",{class:"muted", html:`<b>Fairness areas flagged:</b> ${fairness}`}),
+      el("div",{class:"hr"}),
+      el("div",{class:"goodBox", html:`<b>Green (fair/respectful):</b><br>${green}`}),
+      el("div",{class:"warnBox", html:`<b>Yellow (problematic but repairable):</b><br>${yellow}`}),
+      el("div",{class:"dangerBox", html:`<b>Red (unfair/harmful):</b><br>${red}`}),
+      el("div",{class:"hr"}),
+      el("div",{class:"warnBox", html:`<b>Cognitive distortions to fix:</b><br>${d}`}),
+      el("div",{class:"hr"}),
+      el("div",{class:"goodBox", html:
+        `<b>Repair script (copy/paste):</b><br>${analysis.repairs[p.partnerId].map(s=>"• "+escapeHtml(s)).join("<br>")}`
+      }),
+    ]));
+  }
+
+  // Boundary tips
+  box.append(el("div",{class:"hr"}));
+  box.append(el("div",{class:"goodBox", html:`<b>Boundary & behavior tips (concrete):</b><br>${analysis.boundaryTips.map(t=>"• "+escapeHtml(t)).join("<br>")}`}));
+
+  box.append(el("div",{class:"hr"}));
+  box.append(el("div",{class:"row"},[
+    el("button",{class:"btn", onclick:()=>go("HISTORY")},[document.createTextNode("Back to History")]),
+    el("button",{class:"btn primary", onclick:()=>go("NEW_CONFLICT")},[document.createTextNode("Start Another Conflict")]),
+  ]));
+
+  return box;
+}
+
+function renderHistory() {
+  const v = state.vault;
+  const box = el("div",{},[
+    el("h2",{html:"History"}),
+    el("div",{class:"muted", html:"All conflicts stored locally in your encrypted vault."}),
+    el("div",{class:"hr"}),
+  ]);
+
+  if (!v.conflicts.length) {
+    box.append(el("div",{class:"muted", html:"No conflict sessions yet."}));
+    return box;
+  }
+
+  const list = el("div",{class:"list"},[]);
+  const relById = (id)=> v.relationships.find(r=>r.id===id);
+
+  [...v.conflicts].sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||"")).forEach(c=>{
+    const r = relById(c.relationshipId);
+    const a = c.analysis;
+    const badge = a?.safetyPivot ? {txt:"Safety", cls:"bR"} : (a ? {txt:"Analyzed", cls:"bG"} : {txt:"In progress", cls:"bY"});
+    list.append(el("div",{class:"item"},[
+      el("div",{},[
+        el("div",{html:`<b>${escapeHtml(r?.name||"Relationship")}</b> <span class="badge ${badge.cls}">${badge.txt}</span>`}),
+        el("div",{class:"small", html:`${new Date(c.createdAt).toLocaleString()} · mode: ${escapeHtml(c.mode)} · outcome: ${escapeHtml(c.outcome)}`})
+      ]),
+      el("div",{class:"inline"},[
+        el("button",{class:"btn", onclick:()=>{
+          state.selected.relationshipId = c.relationshipId;
+          state.selected.conflictId = c.id;
+          state.view = a?.safetyPivot ? "SAFETY" : "REPORT";
+          render();
+        }},[document.createTextNode("Open")]),
+        el("button",{class:"btn danger", onclick:async()=>{
+          if (!confirm("Delete this conflict session?")) return;
+          v.conflicts = v.conflicts.filter(x=>x.id!==c.id);
+          await saveVault();
+          render();
+          toast("Deleted.");
+        }},[document.createTextNode("Delete")]),
+      ])
+    ]));
+  });
+
+  box.append(list);
+  return box;
+}
+
+function renderSettings() {
+  const v = state.vault;
+  const box = el("div",{},[
+    el("h2",{html:"Settings"}),
+    el("div",{class:"muted", html:"Privacy-first controls. Stealth mode exists because reality exists."}),
+    el("div",{class:"hr"}),
+  ]);
+
+  const stealth = checkbox("Enable stealth mode (neutral app name/icon)", v.settings.stealth);
+  const autoLock = input(v.settings.autoLockMinutes, {type:"number", min:"1", max:"120"});
+  const pin = input("", {type:"password", placeholder:"Set a new PIN"});
+  const lockNow = el("button",{class:"btn", onclick:()=>doLock("Locked.")},[document.createTextNode("Lock now")]);
+
+  box.append(
+    stealth.node,
+    formRow("Auto-lock minutes", autoLock),
+    el("div",{class:"hr"}),
+    el("div",{class:"warnBox", html:
+      "<b>Optional PIN:</b> Convenience only. Passphrase is still your real protection. PIN is weaker by nature."
+    }),
+    formRow("Set/replace PIN", pin),
+    el("div",{class:"row"},[
+      el("button",{class:"btn primary", onclick:async()=>{
+        v.settings.stealth = stealth.get();
+        v.settings.autoLockMinutes = parseInt(autoLock.value||"10",10);
+        if (pin.value.trim()) await setPin(pin.value.trim());
+        await saveVault();
+        applyBranding();
+        render();
+        toast("Settings saved.");
+      }},[document.createTextNode("Save Settings")]),
+      lockNow
+    ]),
+    el("div",{class:"hr"}),
+    el("div",{class:"dangerBox", html:
+      "<b>Data location:</b> This app stores an encrypted blob in your browser's LocalStorage. Clearing site data deletes it."
+    })
+  );
+
+  return box;
+}
+
+/** -----------------------------
+ *  CRUD actions
+ *  ----------------------------- */
+function editUser(id){ state._editingUserId = id; go("NEW_USER"); }
+async function deleteUser(id){
+  if (!confirm("Delete this user? This may break relationships/conflicts.")) return;
+  const v = state.vault;
+  v.users = v.users.filter(u=>u.id!==id);
+  // clean up relationships
+  v.relationships = v.relationships.filter(r=>!r.memberIds.includes(id));
+  await saveVault();
+  render();
+  toast("Deleted user + related relationships.");
+}
+function editRel(id){ state._editingRelId = id; go("NEW_REL"); }
+async function deleteRel(id){
+  if (!confirm("Delete this relationship and its conflicts?")) return;
+  const v = state.vault;
+  v.relationships = v.relationships.filter(r=>r.id!==id);
+  v.conflicts = v.conflicts.filter(c=>c.relationshipId!==id);
+  if (state.selected.relationshipId===id) state.selected.relationshipId = null;
+  await saveVault();
+  render();
+  toast("Deleted.");
+}
+
+/** -----------------------------
+ *  Form components
+ *  ----------------------------- */
+function escapeHtml(s=""){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function input(val="", attrs={}) {
+  const n = el("input", {value: val, ...attrs});
+  return n;
+}
+function textarea(val="") {
+  const n = el("textarea",{});
+  n.value = val;
+  return n;
+}
+function select(options=[], selected=null) {
+  const n = el("select",{});
+  // options can be array of strings or ids; allow mapping labels later
+  for (const o of options) {
+    const opt = el("option",{value:o, html: escapeHtml(String(o))});
+    if (String(o)===String(selected)) opt.selected = true;
+    n.append(opt);
+  }
+  // if _render exists, caller can replace labels manually; (kept minimal)
+  return n;
+}
+function formRow(labelText, node, extra={}) {
+  const wrap = el("div",{});
+  wrap.append(el("label",{html: escapeHtml(labelText)}));
+  if (extra.labels && node.tagName==="SELECT") {
+    node.innerHTML="";
+    for (const it of extra.labels) {
+      const opt = el("option",{value:it.value, html: escapeHtml(it.label)});
+      if (node.value===it.value) opt.selected = true;
+      node.append(opt);
+    }
+  }
+  wrap.append(node);
+  return wrap;
+}
+function checkbox(labelText, checked=false) {
+  const cb = el("input",{type:"checkbox"});
+  cb.checked = checked;
+  const node = el("div",{class:"check"},[
+    cb,
+    el("span",{html: escapeHtml(labelText)})
+  ]);
+  return { node, get:()=>cb.checked, set:(v)=>cb.checked=!!v };
+}
+function multiSelect(options, selectedArr) {
+  const set = new Set(selectedArr||[]);
+  const node = el("div",{class:"checkRow"}, options.map(o=>{
+    const c = checkbox(o, set.has(o));
+    c._key = o;
+    return c.node;
+  }));
+  return {
+    node,
+    get:()=> [...node.querySelectorAll("input[type=checkbox]")].map((x,i)=> x.checked ? options[i] : null).filter(Boolean)
+  };
+}
+function renderChecks(arr, existingBehaviors) {
+  const wrap = el("div",{class:"checkRow"},[]);
+  for (const b of arr) {
+    const c = checkbox(b.t, !!existingBehaviors?.[b.k]);
+    c.node.dataset.key = b.k;
+    wrap.append(c.node);
+  }
+  return wrap;
+}
+function readBehaviors(root) {
+  const out = {};
+  root.querySelectorAll("[data-key] input[type=checkbox]").forEach(cb=>{
+    const k = cb.closest("[data-key]").dataset.key;
+    out[k] = cb.checked;
+  });
+  return out;
+}
+function parseEmotions(text) {
+  return text.split("\n").map(s=>s.trim()).filter(Boolean).map(line=>{
+    const [name, intensity] = line.split(":").map(x=>x?.trim());
+    const n = (intensity===undefined) ? 5 : Math.max(0, Math.min(10, parseInt(intensity,10) || 0));
+    return { name: name || "emotion", intensity: n };
+  });
+}
+
+/** -----------------------------
+ *  Speech to text (Web Speech API)
+ *  ----------------------------- */
+function startSTT(targetTextarea) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return toast("Speech recognition not supported in this browser.");
+  const rec = new SR();
+  rec.lang = "en-GB";
+  rec.interimResults = true;
+  rec.continuous = false;
+  let finalText = "";
+  rec.onresult = (e) => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalText += t;
+      else interim += t;
+    }
+    targetTextarea.value = (targetTextarea.value + (targetTextarea.value ? " " : "") + finalText + interim).trim();
+  };
+  rec.onerror = () => toast("Speech-to-text error (permissions?)");
+  rec.onend = () => toast("Speech-to-text stopped.");
+  try { rec.start(); toast("Listening..."); } catch { toast("Could not start STT."); }
+}
+
+/** -----------------------------
+ *  Controls
+ *  ----------------------------- */
+$("#lockBtn").addEventListener("click", ()=>doLock("Locked."));
+applyBranding(true);
+render();
+
+</script>
+</body>
+</html>

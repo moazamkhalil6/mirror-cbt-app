@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mirror — Relationship Coach (P2P-enabled, Privacy-first)</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg:#071022; --panel:#0b1220; --muted:#9aa6c1; --text:#eaf2ff;
+      --accent:#6fa8ff; --accent-2:#ff8fb3; --good:#4ade80; --warn:#facc6b; --bad:#ff6b7a;
+      --r:14px; --shadow: 0 20px 60px rgba(3,8,20,.6); --glass: rgba(255,255,255,.02);
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{margin:20px;background:radial-gradient(700px 400px at 10% 0%, rgba(255,139,171,.06), transparent 30%),radial-gradient(900px 600px at 95% 10%, rgba(111,172,255,.04), transparent 30%),var(--bg);color:var(--text)}
+    .app{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:320px 1fr;gap:20px}
+    @media(max-width:980px){.app{grid-template-columns:1fr}}
+    .side{background:linear-gradient(180deg,var(--panel),#0e1624);padding:18px;border-radius:var(--r);box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.02);min-height:520px}
+    .main{background:linear-gradient(180deg,var(--panel),#0e1624);padding:18px;border-radius:var(--r);box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.02)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:52px;height:52px;border-radius:12px;background:conic-gradient(from 220deg,var(--accent),var(--accent-2),#9fe7ff,var(--accent));box-shadow:0 12px 30px rgba(0,0,0,.4)}
+    h1{margin:0;font-size:18px}
+    .sub{color:var(--muted);font-size:13px;margin-top:4px}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:7px 10px;border-radius:999px;background:var(--glass);font-size:13px;color:var(--muted);border:1px solid rgba(255,255,255,.02)}
+    nav{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+    nav button{background:transparent;border:1px solid transparent;color:var(--muted);padding:10px 12px;border-radius:10px;text-align:left;cursor:pointer;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+    nav button.active{color:var(--text);border-color:rgba(111,161,255,.12);background:linear-gradient(180deg, rgba(111,161,255,.04), rgba(255,139,171,.02))}
+    .footer{margin-top:auto;color:var(--muted);font-size:12px;line-height:1.4}
+    .card{background:transparent;border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,.02);margin-bottom:14px}
+    label{display:block;color:var(--muted);margin-bottom:6px;font-size:13px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.03);background:linear-gradient(180deg, rgba(255,255,255,.01), transparent);color:var(--text);outline:none;font:inherit}
+    textarea{min-height:90px;resize:vertical}
+    .btn{padding:9px 14px;border-radius:999px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#071022;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.03);color:var(--muted)}
+    .btn.danger{background:linear-gradient(180deg, rgba(255,107,122,.95), rgba(255,107,122,.8));color:#fff}
+    .tag{display:inline-flex;gap:8px;align-items:center;padding:5px 9px;border-radius:999px;background:var(--glass);color:var(--muted);font-size:13px;border:1px solid rgba(255,255,255,.02)}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:8px 10px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,.03);color:var(--muted);font-size:13px;cursor:pointer}
+    .chip[data-on="1"]{background:linear-gradient(90deg, rgba(111,161,255,.12), rgba(255,139,171,.08));color:var(--text);border-color:rgba(111,161,255,.18)}
+    .hr{height:1px;background:rgba(255,255,255,.02);margin:12px 0;border-radius:2px}
+    table.simple{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+    table.simple th,table.simple td{padding:6px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.02)}
+    .badge{padding:6px 9px;border-radius:999px;background:var(--glass);color:var(--muted);font-size:13px;border:1px solid rgba(255,255,255,.02)}
+    @media (max-width:720px){.side{position:relative;height:auto}}
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Mirror relationship coach">
+    <aside class="side" id="sidebar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1 id="appTitle">Mirror</h1>
+          <div class="sub">Privacy-first conflict engine — offline & P2P</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+        <div id="vaultPill" class="pill">🔒 Locked</div>
+        <button id="quickExit" class="btn ghost" title="Quick Exit (panic)">⛔ Exit</button>
+      </div>
+
+      <nav id="nav" aria-label="Main navigation" style="margin-top:12px">
+        <button id="navLock" class="active" onclick="go('LOCK')">Vault Lock</button>
+        <button id="navProfiles" onclick="go('PROFILES')" disabled>People & Profiles</button>
+        <button id="navRel" onclick="go('REL')" disabled>Relationship</button>
+        <button id="navSession" onclick="go('SESSION')" disabled>New Session</button>
+        <button id="navInsights" onclick="go('INSIGHTS')" disabled>Insight Lab</button>
+        <button id="navHist" onclick="go('HIST')" disabled>History</button>
+        <button id="navSettings" onclick="go('SETTINGS')" disabled>Settings</button>
+      </nav>
+
+      <div class="footer">
+        <div><strong>Privacy-first:</strong></div>
+        <div class="muted" style="margin-top:6px">
+          • End-to-end on this device or direct P2P<br>
+          • Encrypted vault (AES‑GCM)<br>
+          • No cloud unless you choose to export & share
+        </div>
+        <div style="margin-top:8px;color:var(--warn);font-size:12px">Not emergency help. If you're unsafe, seek real-world support immediately.</div>
+      </div>
+    </aside>
+
+    <main class="main" id="app" role="main" aria-live="polite"></main>
+  </div>
+
+<script>
+/*
+  Mirror P2P-enabled single-file app
+  - Local encrypted vault (AES-GCM PBKDF2)
+  - Manual WebRTC signaling (copy-paste) using STUN (free) for direct P2P
+  - Share only a minimal summary (selected fields) over the encrypted datachannel
+  - Keeps privacy: raw intakes never sent unless user intentionally exports them
+  - Designed for low-hassle: create offer -> paste to partner -> partner creates answer -> paste back
+*/
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+const nowISO = () => new Date().toISOString();
+const uid = (p='id') => (crypto.randomUUID ? crypto.randomUUID() : `${p}_${Math.random().toString(36).slice(2)}`);
+const STORAGE_KEY = 'mirror_master_vault';
+const STORAGE_SALT = 'mirror_master_salt';
+const META_KEY = 'mirror_master_meta';
+
+// small helpers
+function esc(s=''){ return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg, t=2200){ const d=document.createElement('div'); d.textContent=msg; Object.assign(d.style,{position:'fixed',right:'18px',bottom:'18px',padding:'10px 14px',background:'rgba(7,10,18,.92)',color:'#fff',borderRadius:'10px',zIndex:9999}); document.body.appendChild(d); setTimeout(()=>d.remove(),t); }
+
+// --- Crypto utils
+const b64 = { enc: (u8)=>btoa(String.fromCharCode(...new Uint8Array(u8))), dec: (s)=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer };
+
+async function deriveKey(passphrase, saltB64){
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  const salt = saltB64 ? new Uint8Array(b64.dec(saltB64)) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:250000, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
+  return {key, saltB64: b64.enc(salt)};
+}
+async function encryptJson(key, obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const pt = new TextEncoder().encode(JSON.stringify(obj));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, pt);
+  return {iv:b64.enc(iv), ct:b64.enc(ct)};
+}
+async function decryptJson(key, blob){
+  const iv = new Uint8Array(b64.dec(blob.iv));
+  const ct = b64.dec(blob.ct);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function loadVaultBlob(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){return null} }
+function loadMeta(){ try{ return JSON.parse(localStorage.getItem(META_KEY)); }catch(e){return null} }
+function saveMeta(obj){ localStorage.setItem(META_KEY, JSON.stringify(obj)); }
+
+// --- Minimal data model and engine (same as previous)
+function newVault(){ return {version:'1.0', createdAt: nowISO(), users:[], relationships:[], sessions:[]}; }
+
+// Distortions (same set)
+const DISTORTIONS = [
+  {name:'Mind reading', re:/\bi know (you|they)\b|\bobviously\b.*(thinks|means)/i, tip:'Ask a clarifying question.'},
+  {name:'Catastrophizing', re:/\b(ruined|disaster|over forever|never recover)\b/i, tip:'Scale the fear.'},
+  {name:'Overgeneralizing', re:/\b(always|never)\b/i, tip:'Name the single example instead.'},
+  {name:'Labeling', re:/\byou( are|'re) (selfish|crazy|toxic|evil|useless|narcissist)/i, tip:'Attack the behavior, not the person.'},
+  {name:'Fortune telling', re:/\b(it will|you will) (leave|cheat|fail)\b/i, tip:'Verify rather than predict.'},
+  {name:'Should statements', re:/\b(should|must|have to)\b/i, tip:'Use "I need / I prefer" to negotiate.'}
+];
+
+function detectDistortions(text=''){ const hits=[]; for(const d of DISTORTIONS) if(d.re.test(text||'')) hits.push({name:d.name,tip:d.tip}); return hits; }
+function ownershipScore(story=''){ const t=(story||'').toLowerCase(); const i=(t.match(/\bi\b/g)||[]).length; const you=(t.match(/\byou\b/g)||[]).length; const ownP=(t.match(/i (shouldn't have|could have|overreacted|went too far|was harsh)/g)||[]).length; const total=i+you||1; let s=i/total; s+=ownP*0.2; if(s>1) s=1; if(s<0) s=0; return s; }
+function safetyFlagsFromIntake(intake={}){ const t = ((intake.safety||'') + '\n' + (intake.story||'') + '\n' + (intake.facts||'')).toLowerCase(); const flags=[]; if(/\bout(ing)?\b|expos(e|ing)/.test(t)) flags.push('Threats around outing / identity'); if(/\b(control|tracking|monitor|gps|location)\b/.test(t)) flags.push('Possible coercive control / monitoring'); if(/\b(hit|punch|slap|assault|beat)\b/.test(t)) flags.push('Possible physical aggression'); if(/\b(self-?harm|suicide)\b/.test(t)) flags.push('Self-harm / suicidal content'); if(/\b(threat|i will (leave|ruin|expose))\b/.test(t)) flags.push('Threatening behaviour / ultimatums'); return [...new Set(flags)]; }
+function oneLine(s=''){ return (s||'').replace(/\s+/g,' ').trim().slice(0,260); }
+function parseEmotions(txt=''){ return (txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(line=>{const m=line.match(/^(.+?):\s*(\d+)/);return m?{emotion:m[1].trim(),intensity:Math.max(0,Math.min(10,parseInt(m[2],10)))}:{emotion:line,intensity:null}}); }
+
+function analyzeSession(intA,intB,rel,users){
+  const distA = detectDistortions((intA.story||'') + '\n' + (intA.beliefs||''));
+  const distB = detectDistortions((intB.story||'') + '\n' + (intB.beliefs||''));
+  const ownA = ownershipScore(intA.story), ownB = ownershipScore(intB.story);
+  const fairAreas = Array.from(new Set([...(intA.fairness?.areas||[]), ...(intB.fairness?.areas||[])]));
+  const shared = fairAreas.filter(a => (intA.fairness?.areas||[]).includes(a) && (intB.fairness?.areas||[]).includes(a));
+  const gaps = fairAreas.filter(a => ((intA.fairness?.areas||[]).includes(a)) !== ((intB.fairness?.areas||[]).includes(a)));
+  const safety = [...new Set([...safetyFlagsFromIntake(intA), ...safetyFlagsFromIntake(intB)])];
+  let headline = 'This conflict looks less like a single incident and more like repeated unmet needs and clashing beliefs.';
+  if(shared.includes('privacy/phones') && shared.includes('respect/tone')) headline = 'Not about a phone — about trust and tone feeling one-sided.';
+  if(shared.includes('time') && shared.includes('emotional support')) headline = 'Fear of carrying more emotional work is under the surface.';
+  if(gaps.includes('decision-making') || gaps.includes('fairness')) headline = 'Different rulebooks on fairness are colliding.';
+  if(intA.fairness?.feel==='unfair' && intB.fairness?.feel==='unfair') headline = 'Both feel mistreated — usually a system issue, not just one person.';
+  const tips = []; const hardStops=[];
+  if(safety.length){ hardStops.push('If threats/control/outing appear, stop and prioritise safety. Seek real-life support.'); hardStops.push('If physical safety is at risk, seek immediate help.'); }
+  if(shared.includes('privacy/phones')){ tips.push('Write one sentence describing phone/privacy norms you both accept.'); tips.push('If device-checking persists, treat it as a trust problem needing repair, not proof.'); }
+  if(shared.includes('respect/tone')){ tips.push('Create a tone protocol: call a 20-minute break with a return time.'); tips.push('Replace "you always" with one specific example plus feeling.'); }
+  if(gaps.length) tips.push('Pick one fairness area to define "good enough" together, not perfect.');
+  if(!tips.length){ tips.push('Each pick one small behavior change to try next time. Small, specific actions work.'); tips.push('Read each other’s "what I actually wanted" aloud without interrupting.'); }
+  const repair = name => ['What I did (specific): ____','Impact on you: ____','What I take responsibility for: ____','What I’ll change next time: ____','What I ask from you: ____'];
+  return {
+    createdAt: nowISO(),
+    relationshipName: rel?.name || 'Relationship',
+    partnerA:{name:users[0]?.name||'Partner A',ownership:ownA,distortions:distA.map(d=>d.name),fairFeel:intA.fairness?.feel||'unclear'},
+    partnerB:{name:users[1]?.name||'Partner B',ownership:ownB,distortions:distB.map(d=>d.name),fairFeel:intB.fairness?.feel||'unclear'},
+    neutralFacts:[`${users[0]?.name||'Partner A'}: ${oneLine(intA.facts)}`,`${users[1]?.name||'Partner B'}: ${oneLine(intB.facts)}`],
+    whatTheyWanted:[`${users[0]?.name||'Partner A'} wanted: ${oneLine(intA.whatYouWanted)}`,`${users[1]?.name||'Partner B'} wanted: ${oneLine(intB.whatYouWanted)}`],
+    beliefs:[`${users[0]?.name||'Partner A'} belief: ${oneLine(intA.beliefs)}`,`${users[1]?.name||'Partner B'} belief: ${oneLine(intB.beliefs)}`],
+    emotions:{A:parseEmotions(intA.emotions),B:parseEmotions(intB.emotions)},
+    fair:{shared,gaps},
+    safety,
+    headline,
+    recommendations:{tips, hardStops},
+    repair:{A:repair(users[0]?.name||'Partner A'),B:repair(users[1]?.name||'Partner B')},
+    raw:{A:intA,B:intB}
+  };
+}
+
+// --- App state and UI router (keeps same structure as previous file) ---
+
+const appState = {
+  view:'LOCK', locked:true, key:null, vault:null, selectedRelId:null, sessionDraft:null, passphraseCache:null
+};
+
+function setNavEnabled(on){
+  ['navProfiles','navRel','navSession','navInsights','navHist','navSettings'].forEach(id=>{const el=document.getElementById(id); if(el) el.disabled=!on;});
+  const pill = document.getElementById('vaultPill'); if(pill) pill.textContent = on? '🔓 Unlocked' : '🔒 Locked';
+}
+
+function navActive(id){ document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active')); const el = document.getElementById(id); if(el) el.classList.add('active'); }
+
+function go(view){ appState.view=view; render(); }
+
+// --- Vault actions (create/unlock/save/wipe) ---
+
+async function createVault(){
+  const pass = prompt('Create a passphrase (10+ chars). Use a sentence you will not forget:');
+  if(!pass || pass.length<10){ toast('Passphrase too short.'); return; }
+  const {key, saltB64} = await deriveKey(pass);
+  const vault = newVault();
+  const blob = await encryptJson(key, vault);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(blob)); localStorage.setItem(STORAGE_SALT, saltB64);
+  appState.key=key; appState.vault=vault; appState.locked=false; appState.passphraseCache=pass;
+  setNavEnabled(true); toast('Vault created.');
+  go('PROFILES'); render();
+}
+
+async function unlockVault(){
+  const pass = prompt('Enter your vault passphrase:');
+  if(!pass){ toast('Passphrase required.'); return; }
+  const blob = loadVaultBlob();
+  if(!blob){ toast('No vault found.'); return; }
+  const saltB64 = localStorage.getItem(STORAGE_SALT);
+  if(!saltB64){ toast('Vault salt missing. Cannot unlock.'); return; }
+  try{
+    const {key} = await deriveKey(pass, saltB64);
+    const vault = await decryptJson(key, blob);
+    appState.key=key; appState.vault=vault; appState.locked=false; appState.passphraseCache=pass;
+    setNavEnabled(true); toast('Vault unlocked.'); go('PROFILES'); render();
+  }catch(e){ console.error(e); toast('Wrong passphrase or corrupted vault.'); }
+}
+
+async function saveVaultLocal(){
+  if(!appState.key || !appState.vault) return;
+  const blob = await encryptJson(appState.key, appState.vault);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(blob));
+  const meta = loadMeta()||{}; meta.updatedAt = nowISO(); saveMeta(meta);
+}
+
+function wipeVault(){
+  if(!confirm('This deletes all local encrypted data. This cannot be undone.')) return;
+  localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(STORAGE_SALT); localStorage.removeItem(META_KEY);
+  appState.locked=true; appState.key=null; appState.vault=null; appState.passphraseCache=null; appState.selectedRelId=null; appState.sessionDraft=null;
+  setNavEnabled(false); go('LOCK'); render(); toast('Vault wiped.');
+}
+
+// --- Render router (simpler in this file) ---
+
+function render(){
+  navActive({
+    'LOCK':'navLock','PROFILES':'navProfiles','REL':'navRel','SESSION':'navSession',
+    'INSIGHTS':'navInsights','HIST':'navHist','SETTINGS':'navSettings'
+  }[appState.view] || 'navLock');
+
+  const root = document.getElementById('app'); root.innerHTML='';
+
+  if(appState.view === 'LOCK') return renderLock(root);
+  if(appState.locked) return renderLocked(root);
+
+  if(appState.view === 'PROFILES') return renderProfiles(root);
+  if(appState.view === 'REL') return renderRelationship(root);
+  if(appState.view === 'SESSION') return renderSession(root);
+  if(appState.view === 'INSIGHTS') return renderInsights(root);
+  if(appState.view === 'HIST') return renderHistory(root);
+  if(appState.view === 'SETTINGS') return renderSettings(root);
+
+  root.appendChild(makeCard('<div class="muted">Unknown view</div>'));
+}
+
+// --- Simple UI components / helpers ---
+
+function makeCard(innerHTML){ const d=document.createElement('div'); d.className='card'; d.innerHTML=innerHTML; return d; }
+function escHtml(s){ return esc(s); }
+
+// --- Views: LOCK / locked ---
+
+function renderLocked(root){
+  root.appendChild(makeCard('<h2>Vault locked</h2><div class="muted">Unlock with passphrase to use profiles, sessions and insights.</div><div style="margin-top:12px"><button class="btn" onclick="go(\\'LOCK\\')">Open Vault Lock</button></div>'));
+}
+
+function renderLock(root){
+  const blob = loadVaultBlob();
+  const hasVault = !!blob;
+  const html = `
+    <h2>Vault Lock</h2>
+    <div class="muted">Local encrypted vault (AES‑GCM). No servers. If you lose your passphrase, data cannot be recovered.</div>
+    <div class="hr"></div>
+    <div><button class="btn" id="createBtn">${hasVault? 'Unlock existing vault' : 'Create vault'}</button></div>
+    <div style="margin-top:12px" class="muted small">You will be prompted for a passphrase in the next step. For minimal friction share only a single passphrase with partner if you want to allow key-rotation sync method later.</div>
+  `;
+  const c = makeCard(html); root.appendChild(c);
+  document.getElementById('createBtn').addEventListener('click', async ()=>{
+    if(hasVault){ await unlockVault(); } else { await createVault(); }
+  });
+}
+
+// --- Profiles view (minimal) ---
+
+function renderProfiles(root){
+  const v = appState.vault || {users:[]};
+  const header = makeCard(`<div style="display:flex;justify-content:space-between;align-items:center"><div><h2>People & Profiles</h2><div class="muted">Add partner profiles so the engine can consider identity, outness and stressors.</div></div><div><button class="btn" id="addPerson">Add person</button></div></div>`);
+  root.appendChild(header);
+  document.getElementById('addPerson').addEventListener('click', ()=> { const user={id:uid('u'),name:'',pronouns:'',age:'',role:'',culturalBackground:'',coreBeliefs:[],triggers:[],notes:''}; renderUserForm(user,'New person'); });
+
+  if(!v.users.length){ root.appendChild(makeCard('<div class="muted">No people yet. Add at least two to create a relationship.</div>')); return; }
+  v.users.forEach(u=>{
+    const el = makeCard(`<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700">${escHtml(u.name||'Unnamed')}</div><div class="muted">${escHtml(u.pronouns||'')} ${u.age? '· '+escHtml(u.age+'y'):''} ${u.role? '· '+escHtml(u.role):''}</div></div><div style="display:flex;gap:8px"><button class="btn ghost" onclick="editUser('${u.id}')">Edit</button><button class="btn danger" onclick="deleteUser('${u.id}')">Delete</button></div></div>`);
+    root.appendChild(el);
+  });
+}
+
+function renderUserForm(u, title){
+  appState.view='PROFILES';
+  const root = document.getElementById('app'); root.innerHTML='';
+  const html = `
+    <h2>${escHtml(title)}</h2>
+    <div class="muted">Private profile helps the engine be accurate. Nothing is sent unless you explicitly share a minimal summary via P2P.</div>
+    <div class="hr"></div>
+    <div class="grid">
+      <div class="col-6"><label>Name</label><input id="u_name" value="${escHtml(u.name||'')}" /></div>
+      <div class="col-6"><label>Pronouns</label><input id="u_pronouns" value="${escHtml(u.pronouns||'')}" /></div>
+      <div class="col-3"><label>Age</label><input id="u_age" value="${escHtml(u.age||'')}" /></div>
+      <div class="col-9"><label>Role</label><input id="u_role" value="${escHtml(u.role||'')}" /></div>
+      <div class="col-12"><label>Cultural / religious background</label><input id="u_culture" value="${escHtml(u.culturalBackground||'')}" /></div>
+      <div class="col-12"><label>Core beliefs (one per line)</label><textarea id="u_beliefs">${escHtml((u.coreBeliefs||[]).join('\\n'))}</textarea></div>
+      <div class="col-12"><label>Triggers (one per line)</label><textarea id="u_triggers">${escHtml((u.triggers||[]).join('\\n'))}</textarea></div>
+      <div class="col-12"><label>Notes (optional)</label><textarea id="u_notes">${escHtml(u.notes||'')}</textarea></div>
+      <div class="col-12" style="margin-top:8px;display:flex;gap:8px"><button class="btn" id="saveUserBtn">Save</button><button class="btn ghost" id="cancelUserBtn">Cancel</button></div>
+    </div>
+  `;
+  root.appendChild(makeCard(html));
+  document.getElementById('saveUserBtn').addEventListener('click', async ()=>{
+    const v = appState.vault;
+    const newUser = {
+      id: u.id,
+      name: document.getElementById('u_name').value.trim(),
+      pronouns: document.getElementById('u_pronouns').value.trim(),
+      age: document.getElementById('u_age').value.trim(),
+      role: document.getElementById('u_role').value.trim(),
+      culturalBackground: document.getElementById('u_culture').value.trim(),
+      coreBeliefs: document.getElementById('u_beliefs').value.split('\n').map(s=>s.trim()).filter(Boolean),
+      triggers: document.getElementById('u_triggers').value.split('\n').map(s=>s.trim()).filter(Boolean),
+      notes: document.getElementById('u_notes').value.trim(),
+      updatedAt: nowISO()
+    };
+    const idx = v.users.findIndex(x=>x.id===u.id);
+    if(idx>=0) v.users[idx]=newUser; else v.users.push(newUser);
+    await saveVaultLocal(); toast('Person saved.'); render();
+  });
+  document.getElementById('cancelUserBtn').addEventListener('click', ()=> render());
+}
+
+function editUser(id){ const u = appState.vault.users.find(x=>x.id===id); if(!u) return toast('Not found'); renderUserForm(u,'Edit person'); }
+async function deleteUser(id){ if(!confirm('Delete this person?')) return; appState.vault.users = appState.vault.users.filter(u=>u.id!==id); appState.vault.relationships.forEach(r=>r.partnerIds=(r.partnerIds||[]).filter(pid=>pid!==id)); await saveVaultLocal(); toast('Person deleted'); render(); }
+
+// --- Relationship CRUD (simplified) ---
+
+function renderRelationship(root){
+  const v = appState.vault;
+  if(!v.users.length){ root.appendChild(makeCard('<h2>Relationship</h2><div class="muted">Add at least two people to define a relationship.</div><div style="margin-top:12px"><button class="btn" onclick="go(\\'PROFILES\\')">Go to People</button></div>')); return; }
+  if(!v.relationships.length){ renderRelationshipForm({id:uid('r'),name:'',status:'dating',outness:'mixed',partnerIds:[],rules:[],agreements:[]},true,root); return; }
+  renderRelationshipForm(v.relationships[0],false,root);
+}
+
+function renderRelationshipForm(rel,isNew,root){
+  appState.selectedRelId = rel.id;
+  const users = appState.vault.users;
+  const html = `
+    <h2>Relationship setup</h2>
+    <div class="muted">Who is involved, non-negotiables, and outness level. Keep it honest and simple.</div>
+    <div class="hr"></div>
+    <div class="grid">
+      <div class="col-6"><label>Name</label><input id="r_name" value="${escHtml(rel.name||'')}" /></div>
+      <div class="col-3"><label>Status</label><select id="r_status">${['dating','partnered','married','complicated','long-distance'].map(s=>`<option ${rel.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="col-3"><label>Outness</label><select id="r_out">${['not out','partially out','fully out','mixed'].map(s=>`<option ${rel.outness===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="col-12"><label>Partners (pick 2)</label><select id="r_partners" multiple size="${Math.min(users.length,6)}">${users.map(u=>`<option value="${u.id}" ${rel.partnerIds&&rel.partnerIds.includes(u.id)?'selected':''}>${escHtml(u.name||'Unnamed')}</option>`).join('')}</select><div class="muted small">Two-person focus keeps analysis sharp.</div></div>
+      <div class="col-6"><label>Non-negotiables (one per line)</label><textarea id="r_rules">${escHtml((rel.rules||[]).join('\\n'))}</textarea></div>
+      <div class="col-6"><label>Standing agreements (one per line)</label><textarea id="r_agreements">${escHtml((rel.agreements||[]).join('\\n'))}</textarea></div>
+      <div class="col-12" style="margin-top:8px;display:flex;gap:8px"><button class="btn" id="saveRelBtn">Save relationship</button>${!isNew?'<button class="btn danger" id="deleteRelBtn">Delete</button>':''}<button class="btn ghost" id="cancelRelBtn">Cancel</button></div>
+    </div>
+  `;
+  root.appendChild(makeCard(html));
+  document.getElementById('saveRelBtn').addEventListener('click', async ()=>{
+    const sel = Array.from(document.getElementById('r_partners').selectedOptions).map(o=>o.value);
+    if(sel.length<2){ toast('Select two partners'); return; }
+    const r = { id:rel.id, name: document.getElementById('r_name').value.trim()||'Relationship', status: document.getElementById('r_status').value, outness: document.getElementById('r_out').value, partnerIds: sel.slice(0,2), rules: document.getElementById('r_rules').value.split('\n').map(s=>s.trim()).filter(Boolean), agreements: document.getElementById('r_agreements').value.split('\n').map(s=>s.trim()).filter(Boolean), updatedAt: nowISO() };
+    const idx = appState.vault.relationships.findIndex(x=>x.id===rel.id);
+    if(idx>=0) appState.vault.relationships[idx]=r; else appState.vault.relationships=[r];
+    appState.selectedRelId=r.id; await saveVaultLocal(); toast('Relationship saved'); render();
+  });
+  document.getElementById('cancelRelBtn').addEventListener('click', ()=> render());
+  document.getElementById('deleteRelBtn')?.addEventListener('click', async ()=>{ if(!confirm('Delete this relationship?')) return; appState.vault.relationships = appState.vault.relationships.filter(x=>x.id!==rel.id); if(appState.selectedRelId===rel.id) appState.selectedRelId=null; await saveVaultLocal(); toast('Deleted'); render(); });
+}
+
+// --- Session & P2P sharing UI ---
+
+function renderSession(root){
+  const rel = (appState.vault.relationships||[]).find(r=>r.id===appState.selectedRelId) || appState.vault.relationships[0];
+  if(!rel){ root.appendChild(makeCard('<h2>New conflict session</h2><div class="muted">Create a relationship first.</div><div style="margin-top:12px"><button class="btn" onclick="go(\\'REL\\')">Set up relationship</button></div>')); return; }
+  const uA = appState.vault.users.find(u=>u.id===rel.partnerIds[0])||{}; const uB = appState.vault.users.find(u=>u.id===rel.partnerIds[1])||{};
+  if(!uA || !uB){ root.appendChild(makeCard('<h2>New conflict session</h2><div class="muted">Both partners must exist as profiles.</div><div style="margin-top:12px"><button class="btn" onclick="go(\\'PROFILES\\')">Go to People</button></div>')); return; }
+  if(!appState.sessionDraft) appState.sessionDraft={id:uid('sess'), relId:rel.id, createdAt: nowISO(), desiredOutcome:'understanding', label:'', partnerA:null, partnerB:null, report:null};
+
+  const draft = appState.sessionDraft;
+  const aDone = !!draft.partnerA; const bDone = !!draft.partnerB; const ready = aDone && bDone;
+
+  const p2pHtml = `
+    <h4>Share summary (P2P)</h4>
+    <div class="muted">Share only the minimal selected fields directly with your partner via an end-to-end encrypted peer-to-peer link. No server required. This uses WebRTC (STUN) with manual copy-paste signaling for simplicity.</div>
+    <div class="hr"></div>
+    <div><label>Fields to share (only these will be transmitted)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="chip"><input type="checkbox" data-share="headline" checked /> Headline</label><label class="chip"><input type="checkbox" data-share="neutralFacts" checked /> Neutral facts</label><label class="chip"><input type="checkbox" data-share="whatTheyWanted" checked /> What they wanted</label><label class="chip"><input type="checkbox" data-share="recommendations" checked /> Recommendations</label><label class="chip"><input type="checkbox" data-share="ownership" /> Ownership %</label></div>
+    </div>
+    <div class="hr"></div>
+    <div style="display:flex;gap:8px;flex-direction:column">
+      <div><button class="btn" id="createOfferBtn">Create Offer (share with partner)</button> <button class="btn ghost" id="acceptOfferBtn">Accept Offer (paste partner's)</button></div>
+      <div class="muted small">Workflow (Initiator): Create offer → copy text → send to partner (messenger/email/QR) → partner pastes into "Accept Offer" UI to generate answer → partner sends answer back → initiator pastes answer into "Paste answer" field to complete connection.</div>
+    </div>
+    <div id="p2pArea"></div>
+  `;
+
+  const html = `
+    <h2>New conflict session</h2>
+    <div class="muted">Each partner answers privately. The engine generates a neutral, constructive summary; you may share a minimal summary directly with your partner via P2P.</div>
+    <div class="hr"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div class="badge">${escHtml(rel.name)}</div>
+      <div class="muted">Partners: ${escHtml(uA.name||'A')} + ${escHtml(uB.name||'B')}</div>
+    </div>
+    <div class="hr"></div>
+    <div style="display:flex;gap:8px">
+      <button class="${aDone? 'btn ghost':'btn'}" id="intakeA">${aDone? 'Edit' : 'Start'} intake — ${escHtml(uA.name||'Partner A')}</button>
+      <button class="${bDone? 'btn ghost':'btn'}" id="intakeB">${bDone? 'Edit' : 'Start'} intake — ${escHtml(uB.name||'Partner B')}</button>
+      <button class="btn" id="generateReportBtn" ${ready? '':'disabled'}>Generate report</button>
+      <button class="btn ghost" id="discardDraftBtn">Discard draft</button>
+    </div>
+    <div style="margin-top:12px"></div>
+    <div id="reportPreviewArea">${draft.report? '<div class="hr"></div>Report available below' : ''}</div>
+    <div class="hr"></div>
+    ${p2pHtml}
+  `;
+  root.appendChild(makeCard(html));
+
+  document.getElementById('intakeA').addEventListener('click', ()=> startIntake('A'));
+  document.getElementById('intakeB').addEventListener('click', ()=> startIntake('B'));
+  document.getElementById('generateReportBtn').addEventListener('click', async ()=>{ if(!appState.sessionDraft.partnerA||!appState.sessionDraft.partnerB){ toast('Both intakes required'); return;} const relObj = appState.vault.relationships.find(r=>r.id===appState.sessionDraft.relId); const uA = appState.vault.users.find(u=>u.id===relObj.partnerIds[0]); const uB = appState.vault.users.find(u=>u.id===relObj.partnerIds[1]); const report = analyzeSession(appState.sessionDraft.partnerA, appState.sessionDraft.partnerB, relObj, [uA,uB]); appState.sessionDraft.report=report; appState.vault.sessions.push({id:report.createdAt, relId: relObj.id, createdAt: report.createdAt, report}); await saveVaultLocal(); toast('Report generated'); render(); });
+
+  document.getElementById('discardDraftBtn').addEventListener('click', ()=>{ if(!confirm('Discard draft?')) return; appState.sessionDraft=null; toast('Discarded'); render(); });
+
+  // P2P wiring
+  document.getElementById('createOfferBtn').addEventListener('click', createOfferFlow);
+  document.getElementById('acceptOfferBtn').addEventListener('click', acceptOfferFlow);
+
+  // show report preview if exists
+  if(appState.sessionDraft.report) {
+    const preview = document.getElementById('reportPreviewArea');
+    preview.appendChild(renderReportCard(appState.sessionDraft.report));
+  }
+}
+
+// --- Intake form (same as before but private) ---
+
+function startIntake(which){
+  const draft = appState.sessionDraft || (appState.sessionDraft = {id:uid('sess'), relId: (appState.vault.relationships[0] && appState.vault.relationships[0].id) || null, createdAt:nowISO(), desiredOutcome:'understanding', label:'', partnerA:null, partnerB:null, report:null});
+  const rel = appState.vault.relationships.find(r=>r.id===draft.relId);
+  const userId = rel.partnerIds[which==='A'?0:1];
+  const user = appState.vault.users.find(u=>u.id===userId) || {};
+  const existing = which==='A'? draft.partnerA : draft.partnerB;
+  const intake = existing || {userId,userId, facts:'', whatYouWanted:'', story:'', beliefs:'', fairness:{feel:'unclear', areas:[]}, emotions:'', safety:'', createdAt: nowISO()};
+  renderIntakeForm(intake, which, user);
+}
+
+function renderIntakeForm(intake, which, user){
+  const root = document.getElementById('app'); root.innerHTML='';
+  const html = `
+    <h2>Private intake — ${escHtml(user.name||which)}</h2>
+    <div class="muted">Answer carefully. This input is private. When you're ready you can create a summary and opt to share minimal fields via direct P2P.</div>
+    <div class="hr"></div>
+    <div class="grid">
+      <div class="col-12"><label>1) What happened? (facts only)</label><textarea id="i_facts">${escHtml(intake.facts||'')}</textarea></div>
+      <div class="col-12"><label>2) What did you want there?</label><textarea id="i_want">${escHtml(intake.whatYouWanted||'')}</textarea></div>
+      <div class="col-12"><label>3) Tell your side</label><textarea id="i_story">${escHtml(intake.story||'')}</textarea></div>
+      <div class="col-12"><label>4) Beliefs (one per line)</label><textarea id="i_beliefs" placeholder="e.g., If they hide the phone, they are hiding something.">${escHtml((intake.beliefs||''))}</textarea></div>
+      <div class="col-6"><label>5) Fair/unfair?</label><div class="chips" id="i_fairFeel">${['fair','unfair','unclear'].map(f=>`<span class="chip" data-feel="${f}" data-on="${intake.fairness?.feel===f?1:0}">${f}</span>`).join('')}</div></div>
+      <div class="col-6"><label>Areas (select all)</label><div class="chips" id="i_fairAreas">${['time','money','chores','emotional support','intimacy','privacy/phones','respect/tone','decision-making','family','social media','outness/safety'].map(a=>`<span class="chip" data-area="${a}" data-on="${(intake.fairness?.areas||[]).includes(a)?1:0}">${a}</span>`).join('')}</div></div>
+      <div class="col-6"><label>6) Emotions (one per line like: hurt:7)</label><textarea id="i_emotions">${escHtml(intake.emotions||'')}</textarea></div>
+      <div class="col-6"><label>7) Anything about safety?</label><textarea id="i_safety">${escHtml(intake.safety||'')}</textarea></div>
+      <div class="col-12" style="margin-top:8px;display:flex;gap:8px"><button class="btn" id="saveIntBtn">Save intake</button><button class="btn ghost" id="backToSessionBtn">Back</button></div>
+    </div>
+  `;
+  root.appendChild(makeCard(html));
+
+  document.querySelectorAll('#i_fairFeel .chip').forEach(ch=> ch.addEventListener('click', ()=> { document.querySelectorAll('#i_fairFeel .chip').forEach(c=>c.dataset.on='0'); ch.dataset.on='1'; }));
+  document.querySelectorAll('#i_fairAreas .chip').forEach(ch=> ch.addEventListener('click', ()=> ch.dataset.on = ch.dataset.on==='1' ? '0' : '1'));
+
+  document.getElementById('saveIntBtn').addEventListener('click', async ()=>{
+    const int = { userId: intake.userId, facts: document.getElementById('i_facts').value.trim(), whatYouWanted: document.getElementById('i_want').value.trim(), story: document.getElementById('i_story').value.trim(), beliefs: document.getElementById('i_beliefs').value.trim(), fairness: { feel: (Array.from(document.querySelectorAll('#i_fairFeel .chip')).find(c=>c.dataset.on==='1')||{}).dataset?.feel || 'unclear', areas: Array.from(document.querySelectorAll('#i_fairAreas .chip')).filter(c=>c.dataset.on==='1').map(c=>c.dataset.area) }, emotions: document.getElementById('i_emotions').value.trim(), safety: document.getElementById('i_safety').value.trim(), createdAt: nowISO() };
+    const draft = appState.sessionDraft || (appState.sessionDraft = {id:uid('sess'), relId: appState.vault.relationships[0]?.id || null, createdAt: nowISO(), desiredOutcome:'understanding', label:'', partnerA:null, partnerB:null, report:null});
+    if(which==='A') draft.partnerA = int; else draft.partnerB = int;
+    await saveVaultLocal(); toast('Intake saved.'); go('SESSION'); render();
+  });
+
+  document.getElementById('backToSessionBtn').addEventListener('click', ()=> { go('SESSION'); render(); });
+}
+
+// --- Render small report card (already used earlier) ---
+
+function renderReportCard(report){
+  const div = document.createElement('div'); div.className='card';
+  div.innerHTML = `
+    <h3>Conflict report</h3>
+    <div class="muted">${escHtml(report.relationshipName)}</div>
+    <div class="hr"></div>
+    <h4>Summary</h4><p>${escHtml(report.headline)}</p>
+    <h4 class="muted">Neutral facts</h4><ul>${report.neutralFacts.map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>
+    <div class="hr"></div>
+    <h4>Next steps</h4><ul>${report.recommendations.tips.map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>
+    ${report.recommendations.hardStops.length? `<div class="hr"></div><h4>Non-negotiables</h4><ul>${report.recommendations.hardStops.map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>` : ''}
+    <div style="margin-top:8px;display:flex;gap:8px"><button class="btn" id="exportJsonBtn">Export JSON</button> <button class="btn ghost" id="sendP2PBtn">Share minimal via P2P</button></div>
+  `;
+  div.querySelector('#exportJsonBtn').addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify(report,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`mirror-report-${Date.now()}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1500); });
+  div.querySelector('#sendP2PBtn').addEventListener('click', ()=> openP2PShareDialog(report));
+  return div;
+}
+
+// --- Insights, History, Settings simple placeholders (kept minimal) ---
+
+function renderInsights(root){
+  const rel = appState.vault.relationships.find(r=>r.id===appState.selectedRelId) || appState.vault.relationships[0];
+  if(!rel) { root.appendChild(makeCard('<h2>Insight Lab</h2><div class="muted">Create relationship & run a session to see deeper patterns.</div>')); return; }
+  const latest = (appState.vault.sessions||[]).filter(s=>s.relId===rel.id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
+  if(!latest){ root.appendChild(makeCard('<h2>Insight Lab</h2><div class="muted">No sessions yet.</div><div style="margin-top:12px"><button class="btn" onclick="go(\\'SESSION\\')">New session</button></div>')); return; }
+  root.appendChild(renderReportCard(latest.report));
+}
+
+function renderHistory(root){
+  const sessions = appState.vault.sessions || [];
+  if(!sessions.length){ root.appendChild(makeCard('<h2>History</h2><div class="muted">No saved sessions yet.</div>')); return; }
+  root.appendChild(makeCard('<h2>History</h2><div class="muted">Saved reports (local).</div>'));
+  sessions.slice().reverse().forEach(s=>{
+    const el = makeCard(`<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700">${escHtml(s.report.relationshipName)}</div><div class="muted">${new Date(s.createdAt).toLocaleString()}</div></div><div><button class="btn ghost" onclick='openHistoryReport("${s.id}")'>Open</button></div></div>`);
+    root.appendChild(el);
+  });
+}
+function openHistoryReport(id){ const s = (appState.vault.sessions||[]).find(x=>x.id===id); if(!s) return toast('Not found'); const root=document.getElementById('app'); root.innerHTML=''; root.appendChild(renderReportCard(s.report)); }
+
+function renderSettings(root){ root.appendChild(makeCard('<h2>Settings</h2><div class="muted">Stealth & vault controls are in the sidebar. Use wipe with caution.</div>')); }
+
+// --- P2P: Manual signaling using WebRTC data channel ---
+// Design goals: free (STUN), no servers, manual copy-paste signaling to avoid centralized servers and preserve privacy.
+// Workflow:
+// - Initiator: Create Offer -> copy base64 offer text -> send to partner via any messenger
+// - Responder: Paste offer text into "Accept Offer" -> create Answer -> copy base64 answer -> send back
+// - Initiator: Paste answer text into "Paste answer" -> completes connection
+// Once connected, initiator or responder may send a minimal summary (only user-selected fields).
+// The channel is encrypted (DTLS) by the browser; no extra encryption is added. Data is ephemeral.
+
+let pc = null;
+let dataChannel = null;
+const STUN_SERVERS = [{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+
+function createPeerConnection(){
+  const cfg = {iceServers:STUN_SERVERS};
+  pc = new RTCPeerConnection(cfg);
+  pc.oniceconnectionstatechange = ()=> console.log('ICE', pc.iceConnectionState);
+  pc.onicecandidate = (ev)=> { /* candidates included in SDP; manual paste uses full SDP */ };
+  pc.ondatachannel = (ev)=> {
+    dataChannel = ev.channel;
+    setupDataChannel();
+    toast('Data channel received. Ready.');
+  };
+  return pc;
+}
+
+function setupDataChannel(){
+  if(!dataChannel) return;
+  dataChannel.onopen = ()=> { console.log('DC open'); toast('P2P channel open'); };
+  dataChannel.onclose = ()=> { console.log('DC closed'); toast('P2P channel closed'); };
+  dataChannel.onerror = (e)=> { console.error('DC error', e); toast('Data channel error'); };
+  dataChannel.onmessage = (ev)=> {
+    try{
+      const msg = JSON.parse(ev.data);
+      if(msg.type === 'summary'){ showReceivedSummary(msg.payload); }
+      else if(msg.type === 'hello'){ toast('Partner connected'); }
+      else console.log('msg', msg);
+    }catch(e){ console.error('receive parse', e); }
+  };
+}
+
+// Initiator creates offer, returns base64 SDP string
+async function createOfferFlow(){
+  try{
+    createPeerConnection();
+    dataChannel = pc.createDataChannel('mirror-summary', {ordered:true});
+    setupDataChannel();
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    // wait for ICE to gather — we produce an SDP after a short delay to include candidates
+    await new Promise(res => setTimeout(res, 800));
+    const localDesc = pc.localDescription;
+    const sdpStr = JSON.stringify(localDesc);
+    const encoded = btoa(sdpStr);
+    displaySignalingBox('Offer created — share this text with your partner', encoded, true);
+  }catch(e){ console.error(e); toast('Unable to create offer'); }
+}
+
+// Responder accepts an offer (base64 SDP text), creates answer and returns base64 answer string
+async function acceptOfferFlow(){
+  const offerText = prompt('Paste the offer text you received from your partner: (paste base64 string)');
+  if(!offerText){ toast('Offer required'); return; }
+  try{
+    const sdpStr = atob(offerText);
+    const remoteDesc = JSON.parse(sdpStr);
+    createPeerConnection();
+    await pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
+    // create answer
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    // wait briefly for ICE candidates to be gathered
+    await new Promise(res=> setTimeout(res, 800));
+    const encodedAnswer = btoa(JSON.stringify(pc.localDescription));
+    displaySignalingBox('Answer created — send this back to the initiator', encodedAnswer, false);
+  }catch(e){ console.error(e); toast('Failed to accept offer — ensure you pasted correct text'); }
+}
+
+// Initiator pastes answer to finish connection
+async function acceptAnswerText(){
+  const answerText = prompt('Paste the answer text from your partner (base64):');
+  if(!answerText){ toast('Answer required'); return; }
+  try{
+    const sdpStr = atob(answerText);
+    const remoteDesc = JSON.parse(sdpStr);
+    await pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
+    toast('Connection complete (initiator).');
+  }catch(e){ console.error(e); toast('Failed to set remote answer'); }
+}
+
+// UI helper to show signaling box with copy button and optionally paste-answer field
+function displaySignalingBox(title, text, includePasteAnswer){
+  const area = document.getElementById('p2pArea') || document.createElement('div');
+  area.id='p2pArea';
+  area.innerHTML = `<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><div><strong>${escHtml(title)}</strong></div><textarea id="p2pText" readonly style="min-height:80px">${text}</textarea><div style="display:flex;gap:8px"><button class="btn" id="copySignaling">Copy</button>${ includePasteAnswer ? '<button class="btn ghost" id="pasteAnswerBtn">Paste partner answer</button>' : '' }<button class="btn ghost" id="closeP2P">Close</button></div></div>`;
+  document.getElementById('p2pArea').remove?.();
+  document.getElementById('app').appendChild(area);
+  document.getElementById('copySignaling').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(text); toast('Copied to clipboard'); }catch(e){ prompt('Copy this text manually:', text); }
+    if(includePasteAnswer) { setTimeout(()=>{ const ok = confirm('After your partner returns the answer, paste it now?'); if(ok) acceptAnswerText(); },300); }
+  });
+  document.getElementById('closeP2P').addEventListener('click', ()=>{ area.remove(); });
+  if(includePasteAnswer && document.getElementById('pasteAnswerBtn')) document.getElementById('pasteAnswerBtn').addEventListener('click', acceptAnswerText);
+}
+
+// When connection established, user can send a minimal summary (selected fields only)
+function openP2PShareDialog(report){
+  // ask user which fields to share
+  const fields = ['headline','neutralFacts','whatTheyWanted','recommendations','ownership'];
+  const defaultChecked = {headline:true, neutralFacts:true, whatTheyWanted:true, recommendations:true, ownership:false};
+  const choices = fields.map(f=>`<label style="display:inline-flex;align-items:center;gap:8px"><input type="checkbox" data-field="${f}" ${defaultChecked[f]?'checked':''}/> ${f}</label>`).join('<br>');
+  const proceed = confirm('Open P2P share UI? You will be able to create an offer or paste an offer from your partner. (OK)');
+  if(!proceed) return;
+  // show small UI: reuse p2pArea
+  const area = document.getElementById('p2pArea') || document.createElement('div');
+  area.id='p2pArea';
+  area.innerHTML = `<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><div><strong>Select fields to share</strong></div><div>${choices}</div><div style="display:flex;gap:8px"><button class="btn" id="p2pCreateOffer">Create Offer</button><button class="btn ghost" id="p2pAcceptOffer">Accept Offer</button><button class="btn ghost" id="p2pClose">Close</button></div></div>`;
+  document.getElementById('app').appendChild(area);
+  document.getElementById('p2pCreateOffer').addEventListener('click', async ()=>{
+    await createOfferFlow();
+    // when connected, send summary automatically if user wishes
+    setTimeout(()=> {
+      if(dataChannel && dataChannel.readyState==='open'){ sendMinimalSummary(report); }
+      else { toast('Wait for partner to connect. Paste their answer into the "Paste answer" prompt if you have it.'); }
+    }, 1000);
+  });
+  document.getElementById('p2pAcceptOffer').addEventListener('click', ()=> acceptOfferFlow());
+  document.getElementById('p2pClose').addEventListener('click', ()=> area.remove());
+}
+
+// Prepares minimal summary JSON from report based on user-selected checkboxes (in the open dialog)
+function buildMinimalSummary(report){
+  // For convenience, include fields typically selected; the actual UI allowed toggle earlier
+  const minimal = {
+    type:'summary',
+    createdAt: nowISO(),
+    relationshipName: report.relationshipName,
+    headline: report.headline,
+    neutralFacts: report.neutralFacts,
+    whatTheyWanted: report.whatTheyWanted,
+    recommendations: report.recommendations.tips,
+    ownership: { A: report.partnerA.ownership, B: report.partnerB.ownership },
+    // never include rawIntake in P2P minimal summary
+  };
+  return minimal;
+}
+
+function sendMinimalSummary(report){
+  if(!dataChannel || dataChannel.readyState !== 'open'){ toast('No open data channel.'); return; }
+  // allow user to choose share options — for simplicity above we use the form checkboxes if present
+  const checkboxes = Array.from(document.querySelectorAll('[data-field]'));
+  const fieldMap = {};
+  if(checkboxes.length){
+    checkboxes.forEach(cb=> fieldMap[cb.dataset.field]=cb.querySelector('input')? cb.querySelector('input').checked : cb.checked );
+  } else {
+    fieldMap.headline=true; fieldMap.neutralFacts=true; fieldMap.whatTheyWanted=true; fieldMap.recommendations=true; fieldMap.ownership=false;
+  }
+  const payload = { relationshipName: report.relationshipName, createdAt: nowISO() };
+  if(fieldMap.headline) payload.headline = report.headline;
+  if(fieldMap.neutralFacts) payload.neutralFacts = report.neutralFacts;
+  if(fieldMap.whatTheyWanted) payload.whatTheyWanted = report.whatTheyWanted;
+  if(fieldMap.recommendations) payload.recommendations = report.recommendations.tips;
+  if(fieldMap.ownership) payload.ownership = {A: report.partnerA.ownership, B: report.partnerB.ownership};
+
+  const msg = JSON.stringify({type:'summary', payload});
+  dataChannel.send(msg);
+  toast('Minimal summary sent via P2P.');
+}
+
+// Display received summary in a focused card (without raw intake)
+function showReceivedSummary(payload){
+  const root = document.getElementById('app');
+  const card = document.createElement('div'); card.className='card';
+  card.innerHTML = `<h3>Received summary — ${escHtml(payload.relationshipName||'')}</h3><div class="muted small">This is the minimal shared summary from your partner (direct P2P encrypted channel).</div><div class="hr"></div>
+    ${payload.headline? `<h4>Headline</h4><p>${escHtml(payload.headline)}</p>` : ''}
+    ${payload.neutralFacts? `<h4 class="muted">Neutral facts</h4><ul>${payload.neutralFacts.map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>` : ''}
+    ${payload.whatTheyWanted? `<h4 class="muted">What they wanted</h4><ul>${payload.whatTheyWanted.map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>` : ''}
+    ${payload.recommendations? `<h4>Recommendations</h4><ul>${payload.recommendations.map(x=>`<li>${escHtml(x)}</li>`).join('')}</ul>` : ''}
+    ${payload.ownership? `<h4>Ownership (shared)</h4><div class="muted">Partner A: ${(payload.ownership.A*100||0).toFixed(0)}% · Partner B: ${(payload.ownership.B*100||0).toFixed(0)}%</div>` : ''}
+    <div style="margin-top:12px"><button class="btn ghost" onclick="this.closest('.card').remove()">Close</button></div>`;
+  root.prepend(card);
+  toast('Received summary displayed.');
+}
+
+// --- Signaling entrypoints already attached to UI via renderSession() which calls createOfferFlow() / acceptOfferFlow()
+
+// --- Initialization: set quick-exit and boot state ---
+
+document.getElementById('quickExit').addEventListener('click', ()=> { window.location.href='https://www.bbc.co.uk/weather'; });
+
+// Boot: if existing vault exists, stay locked until user unlocks
+(function boot(){
+  const hasVault = !!loadVaultBlob();
+  setNavEnabled(false);
+  appState.locked = true; appState.key=null; appState.vault=null; appState.passphraseCache=null;
+  document.getElementById('appTitle').textContent = 'Mirror';
+  render();
+})();
+
+</script>
+</body>
+</html>

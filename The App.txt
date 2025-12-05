@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mirror • Conflict Engine</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg:#050914;
+      --panel:#0b111e;
+      --panel-soft:#0d1422;
+      --muted:#9aa4b7;
+      --text:#e7edf7;
+      --line:#1b2536;
+      --accent:#8ba5ff;
+      --accent-soft:rgba(139,165,255,.14);
+      --good:#4ade80;
+      --warn:#facc6b;
+      --bad:#fb7185;
+      --shadow:0 18px 55px rgba(0,0,0,.55);
+      --r:18px;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(139,165,255,.16), transparent 60%),
+        radial-gradient(900px 700px at 90% 0%, rgba(74,222,128,.10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--accent)}
+    .wrap{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+    .side{
+      border-right:1px solid var(--line);
+      padding:18px 16px;
+      position:sticky;top:0;height:100vh;
+      background:linear-gradient(145deg,rgba(5,9,20,.96),rgba(5,10,24,.98));
+      backdrop-filter:blur(10px);
+    }
+    .brand{display:flex;gap:10px;align-items:center;margin-bottom:16px;}
+    .logo{
+      width:40px;height:40px;border-radius:16px;
+      background:conic-gradient(from 210deg,rgba(139,165,255,.9),rgba(74,222,128,.8),rgba(139,165,255,.9));
+      box-shadow:0 10px 30px rgba(0,0,0,.6);
+    }
+    .brand h1{font-size:18px;margin:0;letter-spacing:.03em;}
+    .brand-sub{font-size:11px;color:var(--muted);}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      font-size:11px;color:var(--muted);
+    }
+    .nav{margin-top:16px;display:flex;flex-direction:column;gap:6px;}
+    .nav button{
+      width:100%;text-align:left;padding:9px 11px;border-radius:12px;border:1px solid transparent;
+      background:transparent;color:var(--muted);cursor:pointer;font:inherit;
+      display:flex;align-items:center;gap:8px;
+    }
+    .nav button span.icon{font-size:14px;}
+    .nav button.active{
+      border-color:var(--accent-soft);
+      background:radial-gradient(circle at 0 0,rgba(139,165,255,.22),transparent 55%);
+      color:var(--text);
+    }
+    .nav button:disabled{opacity:.45;cursor:not-allowed}
+    .nav button:not(:disabled):hover{background:rgba(255,255,255,.02);}
+
+    .content{padding:20px 22px 32px 22px;max-width:1120px;margin:0 auto;}
+    .card{
+      background:linear-gradient(145deg,rgba(11,17,30,.96),rgba(9,13,24,.98));
+      border-radius:var(--r);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      padding:18px 18px 16px 18px;
+      margin-bottom:16px;
+    }
+    .card h2{margin:0 0 6px;font-size:20px;}
+    .card h3{margin:0 0 6px;font-size:16px;}
+    .card h4{margin:0 0 4px;font-size:14px;}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .space-between{justify-content:space-between;}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;}
+    .col-12{grid-column:span 12}
+    .col-6{grid-column:span 6}
+    .col-4{grid-column:span 4}
+    .col-3{grid-column:span 3}
+
+    .muted{color:var(--muted);}
+    .small{font-size:12px;}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;}
+
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px;}
+    input,select,textarea,button{font:inherit;}
+    input,select,textarea{
+      width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--line);
+      background:rgba(4,8,18,.9);color:var(--text);
+    }
+    textarea{min-height:90px;resize:vertical;}
+    input:focus,select:focus,textarea:focus{outline:1px solid var(--accent-soft);border-color:var(--accent-soft);}
+
+    button.primary{
+      padding:9px 14px;border-radius:999px;border:none;cursor:pointer;
+      background:linear-gradient(135deg,#8ba5ff,#4ade80);
+      color:#050812;font-weight:600;
+      box-shadow:0 10px 25px rgba(0,0,0,.55);
+    }
+    button.ghost{
+      padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(5,9,20,.6);color:var(--text);cursor:pointer;
+    }
+    button.danger{
+      padding:8px 12px;border-radius:999px;border:1px solid rgba(251,113,133,.6);
+      background:rgba(127,29,29,.35);color:var(--text);cursor:pointer;
+    }
+    button[disabled]{opacity:.5;cursor:not-allowed;}
+
+    .tag{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:5px 9px;border-radius:999px;border:1px solid var(--line);
+      font-size:11px;color:var(--muted);
+      background:rgba(5,9,20,.8);
+    }
+    .tag.good{border-color:rgba(74,222,128,.5);color:#bbf7d0;}
+    .tag.warn{border-color:rgba(250,204,107,.6);color:#fef3c7;}
+    .tag.bad{border-color:rgba(251,113,133,.7);color:#fecaca;}
+
+    .chips{display:flex;flex-wrap:wrap;gap:6px;}
+    .chip{
+      padding:6px 9px;border-radius:999px;border:1px solid var(--line);
+      font-size:11px;background:rgba(5,9,20,.8);color:var(--muted);
+      cursor:pointer;user-select:none;
+    }
+    .chip[data-on="1"]{border-color:var(--accent-soft);background:rgba(139,165,255,.12);color:var(--text);}
+
+    .hr{height:1px;background:var(--line);margin:10px 0;}
+
+    .kpi{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;}
+    .kpi-box{
+      padding:10px 11px;border-radius:13px;border:1px solid var(--line);
+      background:rgba(5,9,20,.9);
+      min-width:120px;
+    }
+    .kpi-label{font-size:11px;color:var(--muted);}
+    .kpi-value{font-size:20px;font-weight:700;}
+
+    table.simple{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+    table.simple th,table.simple td{padding:4px 0;text-align:left;}
+    table.simple th{color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);}
+
+    .badge-pill{
+      display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border-radius:999px;
+      background:rgba(15,23,42,.9);border:1px solid var(--line);color:var(--muted);
+    }
+
+    .footer{margin-top:18px;font-size:11px;color:var(--muted);}
+
+    @media (max-width:900px){
+      .wrap{grid-template-columns:1fr;}
+      .side{position:relative;height:auto;}
+    }
+    @media (max-width:640px){
+      .grid{grid-template-columns:1fr;}
+      .col-6,.col-4,.col-3,.col-12{grid-column:span 12;}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Mirror</h1>
+        <div class="brand-sub">Offline conflict engine</div>
+      </div>
+    </div>
+    <div id="vaultPill" class="pill">🔒 Locked · local only</div>
+    <div class="nav">
+      <button id="navLock" class="active" onclick="go('LOCK')"><span class="icon">🔐</span>Vault Lock</button>
+      <button id="navProfiles" onclick="go('PROFILES')" disabled><span class="icon">🧑‍🤝‍🧑</span>People & Profiles</button>
+      <button id="navRel" onclick="go('REL')" disabled><span class="icon">❤️</span>Relationship</button>
+      <button id="navSession" onclick="go('SESSION')" disabled><span class="icon">⚡</span>New Conflict Session</button>
+      <button id="navInsights" onclick="go('INSIGHTS')" disabled><span class="icon">🧠</span>Insight Lab</button>
+      <button id="navHist" onclick="go('HIST')" disabled><span class="icon">📚</span>History</button>
+      <button id="navSettings" onclick="go('SETTINGS')" disabled><span class="icon">⚙️</span>Settings</button>
+    </div>
+    <div class="footer">
+      <div><strong>Privacy-first:</strong></div>
+      <div>• End-to-end on this device</div>
+      <div>• Encrypted vault (AES‑GCM)</div>
+      <div>• No accounts, no cloud</div>
+      <div style="margin-top:8px;">Not emergency help. If you're unsafe, seek real-world support.</div>
+    </div>
+  </aside>
+  <main class="content" id="app"></main>
+</div>
+
+<script>
+// ===== Utilities =====
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const nowISO = () => new Date().toISOString();
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(16) + Math.random().toString(16).slice(2));
+
+function toast(msg){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style,{
+    position:'fixed',bottom:'18px',right:'18px',zIndex:9999,
+    padding:'10px 12px',border:'1px solid var(--line)',borderRadius:'12px',
+    background:'rgba(10,16,30,.96)',color:'var(--text)',boxShadow:'var(--shadow)',
+    fontSize:'12px'
+  });
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2400);
+}
+
+const b64 = {
+  enc:(buf)=>btoa(String.fromCharCode(...new Uint8Array(buf))),
+  dec:(str)=>Uint8Array.from(atob(str),c=>c.charCodeAt(0)).buffer
+};
+
+// ===== Crypto & Storage =====
+const STORAGE_KEY = 'mirror_v2_vault_blob';
+const STORAGE_SALT = 'mirror_v2_salt';
+
+async function deriveKey(passphrase, saltB64){
+  const enc = new TextEncoder();
+  const passKey = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  const salt = saltB64 ? new Uint8Array(b64.dec(saltB64)) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},
+    passKey,
+    {name:'AES-GCM',length:256},
+    false,
+    ['encrypt','decrypt']
+  );
+  return {key,saltB64:b64.enc(salt)};
+}
+
+async function encryptJson(key,obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = new TextEncoder().encode(JSON.stringify(obj));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv},key,data);
+  return {iv:b64.enc(iv),ct:b64.enc(ct)};
+}
+
+async function decryptJson(key,blob){
+  const iv = new Uint8Array(b64.dec(blob.iv));
+  const ct = b64.dec(blob.ct);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+function loadVaultBlob(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw) return null;
+  try{return JSON.parse(raw);}catch{return null;}
+}
+
+async function saveVault(){
+  if(!state.key || !state.vault) return;
+  const blob = await encryptJson(state.key,state.vault);
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(blob));
+}
+
+// ===== Data Model =====
+function newVault(){
+  return {
+    version:'2.0',
+    createdAt:nowISO(),
+    users:[],
+    relationships:[],
+    sessions:[]
+  };
+}
+
+const FAIR_AREAS = ['time','money','chores','emotional support','intimacy','privacy/phones','respect/tone','decision-making','family','social media','outness/safety'];
+
+const DISTORTIONS = [
+  {name:'Mind reading',re:/\bi know (you|they)\b|\bobviously\b.*(thinks|means)/i},
+  {name:'Catastrophizing',re:/\b(ruined|disaster|over forever|never recover)\b/i},
+  {name:'Overgeneralizing',re:/\b(always|never)\b/i},
+  {name:'Labeling',re:/you( are|'re) (selfish|crazy|toxic|evil|useless|narcissist)/i},
+  {name:'Fortune telling',re:/\b(it will|you will) (leave|cheat|fail)\b/i}
+];
+
+function detectDistortions(text){
+  const hits = [];
+  for(const d of DISTORTIONS){
+    if(d.re.test(text||'')) hits.push(d.name);
+  }
+  return [...new Set(hits)];
+}
+
+function analyzeBelief(b){
+  const text = (b||'').toLowerCase();
+  const flags = [];
+  if(/\b(always|never|must|should|have to|cannot|can't)\b/.test(text)) flags.push('Rigid rule');
+  if(/\b(respect|disrespect|loyal|loyalty|betray|betrayal)\b/.test(text)) flags.push('Respect / loyalty lens');
+  if(/\b(control|controlling|check|checking|phone|privacy|trust)\b/.test(text)) flags.push('Control vs trust theme');
+  if(/\b(weak|stupid|useless|worthless|failure|loser)\b/.test(text)) flags.push('Self-worth / shame theme');
+  if(!flags.length) flags.push('No obvious red flags – still worth reality-checking');
+  let risk = 'low';
+  if(flags.length>=3) risk='high';
+  else if(flags.length===2) risk='medium';
+  return {flags,risk};
+}
+
+function pickFinalBossBelief(user){
+  const beliefs = (user && user.coreBeliefs) || [];
+  if(!beliefs.length) return null;
+  let bestIndex = 0, bestScore = -1, bestAnalysis = null;
+  beliefs.forEach((b,idx)=>{
+    const a = analyzeBelief(b);
+    let score = a.flags.length + (a.risk==='high'?2:(a.risk==='medium'?1:0));
+    if(/\b(always|never|must|should|have to)\b/i.test(b)) score += 1;
+    if(score>bestScore){bestScore=score;bestIndex=idx;bestAnalysis=a;}
+  });
+  return {belief:beliefs[bestIndex],analysis:bestAnalysis};
+}
+
+// ===== App State =====
+const state = {
+  view:'LOCK',
+  locked:true,
+  key:null,
+  vault:null,
+  selectedRelId:null,
+  sessionDraft:null
+};
+
+function setNavEnabled(on){
+  ['navProfiles','navRel','navSession','navInsights','navHist','navSettings'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.disabled = !on;
+  });
+  const pill = document.getElementById('vaultPill');
+  if(pill) pill.textContent = on ? '🔓 Unlocked · local only' : '🔒 Locked · local only';
+}
+
+function navActive(id){
+  $$('.nav button').forEach(b=>b.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+
+function go(view){
+  state.view = view;
+  render();
+}
+
+// ===== Views Router =====
+function render(){
+  const map = {
+    LOCK:'navLock',
+    PROFILES:'navProfiles',
+    REL:'navRel',
+    SESSION:'navSession',
+    INSIGHTS:'navInsights',
+    HIST:'navHist',
+    SETTINGS:'navSettings'
+  };
+  navActive(map[state.view] || 'navLock');
+  const root = document.getElementById('app');
+  root.innerHTML = '';
+
+  if(state.view==='LOCK') return viewLock(root);
+  if(state.locked) return viewLocked(root);
+
+  if(state.view==='PROFILES') return viewProfiles(root);
+  if(state.view==='REL') return viewRelationship(root);
+  if(state.view==='SESSION') return viewSession(root);
+  if(state.view==='INSIGHTS') return viewInsights(root);
+  if(state.view==='HIST') return viewHistory(root);
+  if(state.view==='SETTINGS') return viewSettings(root);
+}
+
+// ===== LOCK VIEW =====
+function viewLocked(root){
+  root.innerHTML = `
+    <div class="card">
+      <h2>Vault locked</h2>
+      <p class="muted small">Unlock with your passphrase to use profiles, sessions and insights. Everything stays on this device.</p>
+      <button class="primary" onclick="go('LOCK')">Go to Vault Lock</button>
+    </div>
+  `;
+}
+
+function viewLock(root){
+  const blob = loadVaultBlob();
+  const hasVault = !!blob;
+  root.innerHTML = `
+    <div class="card">
+      <div class="row space-between">
+        <div>
+          <h2>Vault Lock</h2>
+          <p class="muted small">Single passphrase. No reset. If you forget it, the vault is gone.</p>
+        </div>
+        <span class="tag ${hasVault?'warn':'good'}">${hasVault?'Existing vault found':'No vault yet'}</span>
+      </div>
+      <div class="grid" style="margin-top:10px;">
+        <div class="col-12">
+          <label>Passphrase (10+ characters)</label>
+          <input id="passField" type="password" autocomplete="current-password" placeholder="Use a sentence you will not forget" />
+        </div>
+        <div class="col-12 row">
+          ${hasVault ? `
+            <button class="primary" onclick="unlockVault()">Unlock vault</button>
+            <button class="danger" onclick="wipeVault()">Wipe vault (local)</button>
+          ` : `
+            <button class="primary" onclick="createVault()">Create vault</button>
+          `}
+        </div>
+      </div>
+      <div class="footer">
+        This is not a diagnosis tool or therapy replacement. It simply organises what you tell it and reflects patterns back.
+      </div>
+    </div>
+  `;
+}
+
+async function createVault(){
+  const pass = document.getElementById('passField').value || '';
+  if(pass.length<10){toast('Passphrase too short. Use at least 10 characters.');return;}
+  const {key,saltB64} = await deriveKey(pass);
+  const vault = newVault();
+  const blob = await encryptJson(key,vault);
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(blob));
+  localStorage.setItem(STORAGE_SALT,saltB64);
+  state.key = key;state.vault=vault;state.locked=false;
+  setNavEnabled(true);
+  toast('Vault created.');
+  state.view='PROFILES';
+  render();
+}
+
+async function unlockVault(){
+  const pass = document.getElementById('passField').value || '';
+  const blob = loadVaultBlob();
+  if(!blob){toast('No vault found.');return;}
+  const saltB64 = localStorage.getItem(STORAGE_SALT);
+  if(!saltB64){toast('Vault salt missing. Cannot unlock.');return;}
+  try{
+    const {key} = await deriveKey(pass,saltB64);
+    const vault = await decryptJson(key,blob);
+    state.key=key;state.vault=vault;state.locked=false;
+    setNavEnabled(true);
+    toast('Vault unlocked.');
+    if(!state.selectedRelId && vault.relationships.length===1){
+      state.selectedRelId = vault.relationships[0].id;
+    }
+    state.view='PROFILES';
+    render();
+  }catch(e){
+    console.error(e);
+    toast('Wrong passphrase or corrupted vault.');
+  }
+}
+
+function wipeVault(){
+  if(!confirm('This deletes all local encrypted data. This cannot be undone.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_SALT);
+  state.locked=true;state.key=null;state.vault=null;state.selectedRelId=null;state.sessionDraft=null;
+  setNavEnabled(false);
+  toast('Vault wiped.');
+  state.view='LOCK';
+  render();
+}
+
+// ===== ESCAPING =====
+function esc(s){
+  return (s??'').toString().replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'
+  }[c]));
+}
+
+// ===== PROFILES =====
+function viewProfiles(root){
+  const v = state.vault;
+  const users = v.users;
+  const list = users.map(u=>{
+    const values = (u.values||[]).join(', ');
+    return `
+      <div class="card">
+        <div class="row space-between">
+          <div>
+            <div style="font-weight:600;font-size:15px;">${esc(u.name||'Unnamed')}</div>
+            <div class="muted small">${esc(u.pronouns||'')} ${u.age? '· '+esc(u.age+'y'):''} ${u.role? '· '+esc(u.role):''}</div>
+            <div class="muted small">${esc(u.culturalBackground||'')} ${values? '· '+esc(values):''}</div>
+          </div>
+          <div class="row">
+            <button class="ghost" onclick="editUser('${u.id}')">Edit</button>
+            <button class="danger" onclick="deleteUser('${u.id}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  root.innerHTML = `
+    <div class="card">
+      <div class="row space-between">
+        <div>
+          <h2>People & Profiles</h2>
+          <p class="muted small">Basic context so the engine can respect culture, identity and stressors when analysing conflict.</p>
+        </div>
+        <button class="primary" onclick="newUser()">Add person</button>
+      </div>
+    </div>
+    ${list || `<div class="card"><p class="muted small">No people yet. Add at least two to create a relationship.</p></div>`}
+  `;
+}
+
+function newUser(){
+  const u = {
+    id:uid(),name:'',pronouns:'',age:'',role:'',
+    culturalBackground:'',values:[],coreBeliefs:[],triggers:[],notes:''
+  };
+  renderUserForm(u,'New person');
+}
+
+function editUser(id){
+  const u = state.vault.users.find(x=>x.id===id);
+  if(!u){toast('Person not found.');return;}
+  renderUserForm(u,'Edit person');
+}
+
+function renderUserForm(u,title){
+  const root = document.getElementById('app');
+  const values = ['care','fairness','loyalty','freedom','honesty','stability'];
+  root.innerHTML = `
+    <div class="card">
+      <div class="row space-between">
+        <h2>${esc(title)}</h2>
+        <span class="tag">Private profile</span>
+      </div>
+      <div class="grid" style="margin-top:10px;">
+        <div class="col-6">
+          <label>Name</label>
+          <input id="u_name" value="${esc(u.name||'')}" />
+        </div>
+        <div class="col-3">
+          <label>Pronouns</label>
+          <input id="u_pronouns" value="${esc(u.pronouns||'')}" />
+        </div>
+        <div class="col-3">
+          <label>Age</label>
+          <input id="u_age" type="number" value="${esc(u.age||'')}" />
+        </div>
+        <div class="col-6">
+          <label>Role in relationship</label>
+          <input id="u_role" placeholder="e.g. partner, husband" value="${esc(u.role||'')}" />
+        </div>
+        <div class="col-6">
+          <label>Cultural / religious background</label>
+          <input id="u_culture" value="${esc(u.culturalBackground||'')}" />
+        </div>
+        <div class="col-12">
+          <label>Core values (what you pride yourself on)</label>
+          <div class="chips" id="u_values">
+            ${values.map(v=>{
+              const on = (u.values||[]).includes(v);
+              return `<span class="chip" data-val="${esc(v)}" data-on="${on?1:0}" onclick="toggleValueChip(this)">${esc(v)}</span>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="col-6">
+          <label>Core beliefs about relationships (one per line)</label>
+          <textarea id="u_beliefs">${esc((u.coreBeliefs||[]).join('\n'))}</textarea>
+        </div>
+        <div class="col-6">
+          <label>Known triggers (one per line)</label>
+          <textarea id="u_triggers">${esc((u.triggers||[]).join('\n'))}</textarea>
+        </div>
+        <div class="col-12">
+          <label>Notes (mental health, trauma, stress, anything relevant)</label>
+          <textarea id="u_notes">${esc(u.notes||'')}</textarea>
+        </div>
+        <div class="col-12 row" style="margin-top:4px;">
+          <button class="primary" onclick="saveUser('${u.id}')">Save</button>
+          <button class="ghost" onclick="go('PROFILES')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleValueChip(el){
+  const on = el.getAttribute('data-on')==='1';
+  el.setAttribute('data-on', on ? '0':'1');
+}
+
+async function saveUser(id){
+  const v = state.vault;
+  const chips = Array.from(document.querySelectorAll('#u_values .chip'));
+  const values = chips.filter(c=>c.getAttribute('data-on')==='1').map(c=>c.getAttribute('data-val'));
+  const u = {
+    id,
+    name:document.getElementById('u_name').value.trim(),
+    pronouns:document.getElementById('u_pronouns').value.trim(),
+    age:(document.getElementById('u_age').value||'').trim(),
+    role:document.getElementById('u_role').value.trim(),
+    culturalBackground:document.getElementById('u_culture').value.trim(),
+    values,
+    coreBeliefs:document.getElementById('u_beliefs').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    triggers:document.getElementById('u_triggers').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    notes:document.getElementById('u_notes').value.trim(),
+    updatedAt:nowISO()
+  };
+  const idx = v.users.findIndex(x=>x.id===id);
+  if(idx>=0) v.users[idx]=u; else v.users.push(u);
+  await saveVault();
+  toast('Person saved.');
+  go('PROFILES');
+}
+
+async function deleteUser(id){
+  if(!confirm('Delete this person?')) return;
+  const v = state.vault;
+  v.users = v.users.filter(u=>u.id!==id);
+  v.relationships.forEach(r=>{
+    r.partnerIds = (r.partnerIds||[]).filter(pid=>pid!==id);
+  });
+  await saveVault();
+  toast('Person deleted.');
+  render();
+}
+
+// ===== RELATIONSHIP =====
+function viewRelationship(root){
+  const v = state.vault;
+  const rel = v.relationships[0] || null;
+  const users = v.users;
+
+  if(!users.length){
+    root.innerHTML = `
+      <div class="card">
+        <h2>Relationship</h2>
+        <p class="muted small">Add at least two people to define the relationship.</p>
+        <button class="primary" onclick="go('PROFILES')">Go to People</button>
+      </div>
+    `;
+    return;
+  }
+
+  if(!rel){
+    const emptyRel = {id:uid(),name:'',status:'dating',outness:'mixed',partnerIds:[],rules:[],agreements:[]};
+    return renderRelationshipForm(emptyRel,true);
+  }
+  return renderRelationshipForm(rel,false);
+}
+
+function renderRelationshipForm(rel,isNew){
+  const v = state.vault;
+  const users = v.users;
+  state.selectedRelId = rel.id;
+  const root = document.getElementById('app');
+  root.innerHTML = `
+    <div class="card">
+      <div class="row space-between">
+        <div>
+          <h2>Relationship setup</h2>
+          <p class="muted small">Keep it simple: who is involved, what are the non‑negotiables, and how visible is this relationship.</p>
+        </div>
+        <span class="tag">${isNew?'Not saved yet':'Active relationship'}</span>
+      </div>
+      <div class="grid" style="margin-top:10px;">
+        <div class="col-6">
+          <label>Relationship name</label>
+          <input id="r_name" placeholder="e.g. Alex + Sam" value="${esc(rel.name||'')}" />
+        </div>
+        <div class="col-3">
+          <label>Status</label>
+          <select id="r_status">
+            ${['dating','partnered','married','complicated','long‑distance'].map(s=>`<option ${rel.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="col-3">
+          <label>Outness level</label>
+          <select id="r_outness">
+            ${['not out','partially out','fully out','mixed'].map(s=>`<option ${rel.outness===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="col-12">
+          <label>Partners (pick 2 for now)</label>
+          <select id="r_partners" multiple size="${Math.min(users.length,5)}">
+            ${users.map(u=>`<option value="${esc(u.id)}" ${rel.partnerIds&&rel.partnerIds.includes(u.id)?'selected':''}>${esc(u.name||'Unnamed')}</option>`).join('')}
+          </select>
+          <p class="muted small">Later you can extend this; for now, two-person focus keeps conflict analysis sharp.</p>
+        </div>
+        <div class="col-6">
+          <label>Non‑negotiable lines (one per line)</label>
+          <textarea id="r_rules">${esc((rel.rules||[]).join('\n'))}</textarea>
+        </div>
+        <div class="col-6">
+          <label>Standing agreements (one per line)</label>
+          <textarea id="r_agreements">${esc((rel.agreements||[]).join('\n'))}</textarea>
+        </div>
+        <div class="col-12 row" style="margin-top:4px;">
+          <button class="primary" onclick="saveRelationship('${rel.id}')">Save relationship</button>
+          ${!isNew ? `<button class="danger" onclick="deleteRelationship('${rel.id}')">Delete</button>`:''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function saveRelationship(id){
+  const v = state.vault;
+  const sel = Array.from(document.getElementById('r_partners').selectedOptions).map(o=>o.value);
+  if(sel.length<2){toast('Select two partners for conflict work.');return;}
+  const rel = {
+    id,
+    name:document.getElementById('r_name').value.trim() || 'Relationship',
+    status:document.getElementById('r_status').value,
+    outness:document.getElementById('r_outness').value,
+    partnerIds:sel.slice(0,2),
+    rules:document.getElementById('r_rules').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    agreements:document.getElementById('r_agreements').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    updatedAt:nowISO()
+  };
+  const idx = v.relationships.findIndex(r=>r.id===id);
+  if(idx>=0) v.relationships[idx]=rel; else v.relationships=[rel];
+  state.selectedRelId = rel.id;
+  await saveVault();
+  toast('Relationship saved.');
+  render();
+}
+
+async function deleteRelationship(id){
+  if(!confirm('Delete this relationship?')) return;
+  const v = state.vault;
+  v.relationships = v.relationships.filter(r=>r.id!==id);
+  if(state.selectedRelId===id) state.selectedRelId=null;
+  await saveVault();
+  toast('Relationship deleted.');
+  render();
+}
+
+// ===== SESSION (INTAKE + REPORT) =====
+function ensureSessionDraft(){
+  const v = state.vault;
+  const rel = v.relationships.find(r=>r.id===state.selectedRelId);
+  if(!rel) return null;
+  if(!state.sessionDraft){
+    state.sessionDraft = {
+      id:uid(),
+      relId:rel.id,
+      createdAt:nowISO(),
+      desiredOutcome:'understanding',
+      partnerA:null,
+      partnerB:null,
+      report:null
+    };
+  }
+  return state.sessionDraft;
+}
+
+function viewSession(root){
+  const v = state.vault;
+  const rel = v.relationships.find(r=>r.id===state.selectedRelId);
+  if(!rel){
+    root.innerHTML = `
+      <div class="card">
+        <h2>New conflict session</h2>
+        <p class="muted small">Set up the relationship first so the engine knows who is who.</p>
+        <button class="primary" onclick="go('REL')">Set up relationship</button>
+      </div>
+    `;
+    return;
+  }
+  const uA = v.users.find(u=>u.id===rel.partnerIds[0]);
+  const uB = v.users.find(u=>u.id===rel.partnerIds[1]);
+  if(!uA || !uB){
+    root.innerHTML = `
+      <div class="card">
+        <h2>New conflict session</h2>
+        <p class="muted small">Both partners in this relationship must still exist as people profiles.</p>
+        <button class="primary" onclick="go('PROFILES')">Check people</button>
+      </div>
+    `;
+    return;
+  }
+
+  const draft = ensureSessionDraft();
+  const aDone = !!draft.partnerA;
+  const bDone = !!draft.partnerB;
+  const ready = aDone && bDone;
+
+  root.innerHTML = `
+    <div class="card">
+      <div class="row space-between">
+        <div>
+          <h2>New conflict session</h2>
+          <p class="muted small">Each partner answers alone. Then the engine generates a neutral, constructive summary.</p>
+        </div>
+        <div class="row">
+          <span class="tag">${esc(rel.name||'Relationship')}</span>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:10px;">
+        <div class="col-4">
+          <label>Desired outcome</label>
+          <select id="s_outcome">
+            ${['understanding','compromise','clarity','cool-down','disentangle respectfully'].map(o=>`<option ${draft.desiredOutcome===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="col-8">
+          <label>Short title for this conflict (private)</label>
+          <input id="s_label" placeholder="e.g. Phone privacy after midnight" value="${esc(draft.label||'')}" />
+        </div>
+        <div class="col-12 row" style="margin-top:6px;">
+          <button class="${aDone?'ghost':'primary'}" onclick="startIntake('A')">${aDone?'Edit':'Start'} intake – ${esc(uA.name||'Partner A')}</button>
+          <button class="${bDone?'ghost':'primary'}" onclick="startIntake('B')">${bDone?'Edit':'Start'} intake – ${esc(uB.name||'Partner B')}</button>
+          <button class="primary" onclick="generateReport()" ${ready?'':'disabled'}>Generate report</button>
+          <button class="danger" onclick="discardSessionDraft()">Discard draft</button>
+        </div>
+      </div>
+      <p class="muted small">Intakes stay private by default. Only the combined summary is meant to be shared.</p>
+    </div>
+    ${draft.report ? renderReportCard(draft.report) : ''}
+  `;
+
+  document.getElementById('s_outcome').onchange = (e)=>{draft.desiredOutcome=e.target.value;};
+  document.getElementById('s_label').oninput = (e)=>{draft.label=e.target.value;};
+}
+
+function startIntake(which){
+  const v = state.vault;
+  const rel = v.relationships.find(r=>r.id===state.selectedRelId);
+  const u = v.users.find(x=>x.id===rel.partnerIds[which==='A'?0:1]);
+  const draft = ensureSessionDraft();
+  const existing = which==='A'?draft.partnerA:draft.partnerB;
+  const intake = existing || {
+    userId:u.id,
+    facts:'',
+    whatYouWanted:'',
+    story:'',
+    beliefs:'',
+    fairness:{feel:'unclear',areas:[]},
+    emotions:'',
+    safety:'',
+    createdAt:nowISO()
+  };
+
+  const root = document.getElementById('app');
+  root.innerHTML = `
+    <div class="card">
+      <div class="row space-between">
+        <div>
+          <h2>Private intake – ${esc(u.name||which)}</h2>
+          <p class="muted small">Simple questions on the surface. Underneath, the engine maps beliefs, fairness, and impact.</p>
+        </div>
+        <span class="tag">Only for the engine, not your partner</span>
+      </div>
+      <div class="grid" style="margin-top:10px;">
+        <div class="col-12">
+          <label>1. What happened? Stick to facts, no opinions.</label>
+          <textarea id="i_facts">${esc(intake.facts||'')}</textarea>
+        </div>
+        <div class="col-12">
+          <label>2. In that moment, what did you actually want?</label>
+          <textarea id="i_want">${esc(intake.whatYouWanted||'')}</textarea>
+        </div>
+        <div class="col-12">
+          <label>3. Tell your side of the story in your own words.</label>
+          <textarea id="i_story">${esc(intake.story||'')}</textarea>
+        </div>
+        <div class="col-12">
+          <label>4. What belief makes your reaction feel obviously right to you?</label>
+          <textarea id="i_beliefs" placeholder="e.g. If they hide their phone, it means they are hiding something.">${esc(intake.beliefs||'')}</textarea>
+        </div>
+        <div class="col-6">
+          <label>5. Fair or unfair overall?</label>
+          <div class="chips" id="i_fairFeel">
+            ${['fair','unfair','unclear'].map(f=>`<span class="chip" data-feel="${f}" data-on="${intake.fairness.feel===f?1:0}" onclick="pickFairnessFeel('${f}')">${f}</span>`).join('')}
+          </div>
+          <p class="muted small" style="margin-top:4px;">This is about how it felt in your body, not who wins the argument.</p>
+        </div>
+        <div class="col-6">
+          <label>Areas that felt off (select all that apply)</label>
+          <div class="chips" id="i_fairAreas">
+            ${FAIR_AREAS.map(a=>`<span class="chip" data-area="${esc(a)}" data-on="${(intake.fairness.areas||[]).includes(a)?1:0}" onclick="toggleFairArea('${a}')">${esc(a)}</span>`).join('')}
+          </div>
+        </div>
+        <div class="col-6">
+          <label>6. Emotions (one per line like: hurt:7)</label>
+          <textarea id="i_emotions">${esc(intake.emotions||'')}</textarea>
+        </div>
+        <div class="col-6">
+          <label>7. Anything about safety we should know? (identity, outing, control, threats, self-harm)</label>
+          <textarea id="i_safety">${esc(intake.safety||'')}</textarea>
+        </div>
+        <div class="col-12 row" style="margin-top:4px;">
+          <button class="primary" onclick="saveIntake('${which}')">Save intake</button>
+          <button class="ghost" onclick="go('SESSION')">Back to session</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  window.__activeIntake = intake;
+  window.__activeWhich = which;
+}
+
+function pickFairnessFeel(feel){
+  const chips = Array.from(document.querySelectorAll('#i_fairFeel .chip'));
+  chips.forEach(c=>c.setAttribute('data-on',c.getAttribute('data-feel')===feel?'1':'0'));
+  if(window.__activeIntake){window.__activeIntake.fairness.feel = feel;}
+}
+
+function toggleFairArea(area){
+  if(!window.__activeIntake) return;
+  const list = window.__activeIntake.fairness.areas || [];
+  const idx = list.indexOf(area);
+  if(idx>=0) list.splice(idx,1); else list.push(area);
+  window.__activeIntake.fairness.areas = list;
+  const chips = Array.from(document.querySelectorAll('#i_fairAreas .chip'));
+  chips.forEach(c=>{
+    if(c.getAttribute('data-area')===area){
+      const on = c.getAttribute('data-on')==='1';
+      c.setAttribute('data-on', on?'0':'1');
+    }
+  });
+}
+
+async function saveIntake(which){
+  const draft = ensureSessionDraft();
+  if(!draft) return;
+  const intake = window.__activeIntake || {};
+  intake.facts = document.getElementById('i_facts').value.trim();
+  intake.whatYouWanted = document.getElementById('i_want').value.trim();
+  intake.story = document.getElementById('i_story').value.trim();
+  intake.beliefs = document.getElementById('i_beliefs').value.trim();
+  intake.emotions = document.getElementById('i_emotions').value.trim();
+  intake.safety = document.getElementById('i_safety').value.trim();
+  if(which==='A') draft.partnerA = intake; else draft.partnerB = intake;
+  await saveVault();
+  toast('Intake saved.');
+  go('SESSION');
+}
+
+function discardSessionDraft(){
+  if(!confirm('Discard current draft session?')) return;
+  state.sessionDraft = null;
+  toast('Draft discarded.');
+  render();
+}
+
+function parseEmotions(text){
+  const out = [];
+  (text||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(line=>{
+    const m = line.match(/^(.+?):\s*(\d+)/);
+    if(m){
+      out.push({emotion:m[1].trim(),intensity:Math.max(0,Math.min(10,parseInt(m[2],10)))});
+    }else{
+      out.push({emotion:line,intensity:null});
+    }
+  });
+  return out;
+}
+
+function ownershipScore(story){
+  const t = (story||'').toLowerCase();
+  const iCount = (t.match(/\bi /g)||[]).length;
+  const youCount = (t.match(/\byou /g)||[]).length;
+  const ownPhrases = (t.match(/i (shouldn't have|could have|overreacted|went too far|was harsh)/g)||[]).length;
+  const totalRef = iCount + youCount || 1;
+  let score = iCount/totalRef;
+  score += ownPhrases*0.2;
+  if(score>1) score=1; if(score<0) score=0;
+  return score;
+}
+
+function safetyFlagsFromIntake(intake){
+  const t = (intake.safety||'').toLowerCase() + '\n' + (intake.story||'').toLowerCase();
+  const flags = [];
+  if(/threat(en|ened)? to out|outing/.test(t)) flags.push('Threats around outing / identity');
+  if(/control|controlled|controlling|monitor|tracking/.test(t)) flags.push('Possible coercive control');
+  if(/hit|punch|physical|shove|throw/.test(t)) flags.push('Possible physical aggression');
+  if(/self-harm|suicide/.test(t)) flags.push('Self-harm or suicide content');
+  return flags;
+}
+
+async function generateReport(){
+  const v = state.vault;
+  const draft = ensureSessionDraft();
+  if(!draft || !draft.partnerA || !draft.partnerB){toast('Both intakes are needed.');return;}
+  const rel = v.relationships.find(r=>r.id===draft.relId);
+  const uA = v.users.find(u=>u.id===rel.partnerIds[0]);
+  const uB = v.users.find(u=>u.id===rel.partnerIds[1]);
+  const intA = draft.partnerA;
+  const intB = draft.partnerB;
+
+  const distA = detectDistortions(intA.story + '\n' + intA.beliefs);
+  const distB = detectDistortions(intB.story + '\n' + intB.beliefs);
+  const ownA = ownershipScore(intA.story);
+  const ownB = ownershipScore(intB.story);
+
+  const fairAreas = Array.from(new Set([...(intA.fairness.areas||[]),...(intB.fairness.areas||[])]));
+  const sharedAreas = fairAreas.filter(a=>(intA.fairness.areas||[]).includes(a) && (intB.fairness.areas||[]).includes(a));
+  const gapAreas = fairAreas.filter(a=>((intA.fairness.areas||[]).includes(a)) !== ((intB.fairness.areas||[]).includes(a)));
+
+  const sfA = safetyFlagsFromIntake(intA);
+  const sfB = safetyFlagsFromIntake(intB);
+  const allSafety = Array.from(new Set([...sfA,...sfB]));
+
+  const headline = buildHeadline(intA,intB,sharedAreas,gapAreas);
+  const recommendations = buildRecommendations(sharedAreas,gapAreas,intA,intB,rel,uA,uB,allSafety);
+
+  const report = {
+    id:draft.id,
+    relId:rel.id,
+    createdAt:draft.createdAt,
+    label:draft.label||'',
+    desiredOutcome:draft.desiredOutcome,
+    relationshipName:rel.name,
+    partnerA:{name:uA.name||'Partner A',ownership:ownA,distortions:distA,fairFeel:intA.fairness.feel},
+    partnerB:{name:uB.name||'Partner B',ownership:ownB,distortions:distB,fairFeel:intB.fairness.feel},
+    fair:{shared:sharedAreas,gap:gapAreas},
+    safetyFlags:allSafety,
+    neutralFacts:[
+      `From ${uA.name||'Partner A'}: ${oneLine(intA.facts)}`,
+      `From ${uB.name||'Partner B'}: ${oneLine(intB.facts)}`
+    ],
+    whatTheyWanted:[
+      `${uA.name||'Partner A'} wanted: ${oneLine(intA.whatYouWanted)}`,
+      `${uB.name||'Partner B'} wanted: ${oneLine(intB.whatYouWanted)}`
+    ],
+    beliefs:[
+      `${uA.name||'Partner A'} belief: ${oneLine(intA.beliefs)}`,
+      `${uB.name||'Partner B'} belief: ${oneLine(intB.beliefs)}`
+    ],
+    emotions:{
+      A:parseEmotions(intA.emotions),
+      B:parseEmotions(intB.emotions)
+    },
+    headline,
+    recommendations,
+    rawIntakeA:intA,
+    rawIntakeB:intB
+  };
+
+  draft.report = report;
+  v.sessions.push({id:report.id,relId:report.relId,createdAt:report.createdAt,report});
+  await saveVault();
+  toast('Report generated.');
+  render();
+}
+
+function oneLine(s){
+  return (s||'').replace(/\s+/g,' ').trim().slice(0,260);
+}
+
+function buildHeadline(intA,intB,shared,gaps){
+  if(shared.includes('privacy/phones') && shared.includes('respect/tone')){
+    return 'You are not fighting about a phone. You are fighting about trust and respect feeling one‑sided.';
+  }
+  if(shared.includes('time') && shared.includes('emotional support')){
+    return 'Underneath this argument is a fear of carrying more emotional weight than the other.';
+  }
+  if(gaps.includes('fairness') || gaps.includes('decision-making')){
+    return 'You are running two different rulebooks about what counts as fair.';
+  }
+  if(intA.fairness.feel==='unfair' && intB.fairness.feel==='unfair'){
+    return 'Both of you feel mistreated. That usually means the system is broken, not just one person.';
+  }
+  return 'This conflict is less about this one moment and more about repeated unmet needs and clashing beliefs.';
+}
+
+function buildRecommendations(shared,gaps,intA,intB,rel,uA,uB,safety){
+  const tips = [];
+  const hardStops = [];
+
+  if(safety.length){
+    hardStops.push('Anything that feels like control, threats, or outing safety is a priority over winning the argument.');
+    hardStops.push('If anyone feels physically unsafe, use this report as a starting point to talk to a real human professional, not a substitute.');
+  }
+
+  if(shared.includes('privacy/phones')){
+    tips.push('Write one sentence together that defines phone privacy both of you can live with. No secret rules.');
+    tips.push('Agree that checking devices is not a casual habit, it is a serious step. If it keeps happening, you have a trust problem, not a phone problem.');
+  }
+  if(shared.includes('respect/tone')){
+    tips.push('Create a tone rule: when voices rise, either person can call a 20‑minute break, with a promised return time.');
+    tips.push('Replace “you always / you never” with one concrete example and how it made you feel.');
+  }
+  if(gaps.length){
+    tips.push('Pick one fairness area you disagree on and define “good enough” together, not “perfect”.');
+  }
+  if(!tips.length){
+    tips.push('List one thing each of you will do differently next time this topic comes up. Small and specific beats perfect.');
+    tips.push('Re‑read each other’s “what I actually wanted” lines aloud. Assume they were telling the truth about that part.');
+  }
+
+  return {hardStops,tips};
+}
+
+function renderReportCard(report){
+  const ownTag = (x)=>{
+    if(x>=0.65) return `<span class="tag good">Ownership: ${(x*100).toFixed(0)}%</span>`;
+    if(x>=0.4) return `<span class="tag warn">Ownership: ${(x*100).toFixed(0)}%</span>`;
+    return `<span class="tag bad">Ownership: ${(x*100).toFixed(0)}%</span>`;
+  };
+
+  const safetyHtml = report.safetyFlags.length ? `
+    <div class="card">
+      <h3>Safety signals</h3>
+      <ul class="small">
+        ${report.safetyFlags.map(x=>`<li>${esc(x)}</li>`).join('')}
+      </ul>
+      <p class="muted small">Safety is more important than being right. If these keep showing up, treat them seriously.</p>
+    </div>
+  `:'';
+
+  const fairRows = (report.fair.shared.length || report.fair.gap.length) ? `
+    <table class="simple">
+      <thead>
+        <tr><th>Area</th><th>Signal</th></tr>
+      </thead>
+      <tbody>
+        ${report.fair.shared.map(a=>`<tr><td>${esc(a)}</td><td><span class="tag good">Shared concern</span></td></tr>`).join('')}
+        ${report.fair.gap.map(a=>`<tr><td>${esc(a)}</td><td><span class="tag bad">Reality gap</span></td></tr>`).join('')}
+      </tbody>
+    </table>
+  `:'<p class="muted small">No fairness data yet for this session.</p>';
+
+  return `
+    <div class="card">
+      <div class="row space-between">
+        <div>
+          <h3>Conflict report</h3>
+          <p class="muted small">${report.label?esc(report.label):''}</p>
+        </div>
+        <div class="row">
+          <span class="badge-pill">${new Date(report.createdAt).toLocaleString()}</span>
+          <span class="badge-pill">Outcome focus: ${esc(report.desiredOutcome)}</span>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <h4>Summary</h4>
+      <p>${esc(report.headline)}</p>
+      <h4 class="muted">Neutral facts</h4>
+      <ul class="small">${report.neutralFacts.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+      <h4 class="muted">What each of you wanted</h4>
+      <ul class="small">${report.whatTheyWanted.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+      <div class="hr"></div>
+      <h4>Ownership & distortions</h4>
+      <div class="grid">
+        <div class="col-6">
+          <div class="row" style="margin-bottom:4px;">
+            <span class="badge-pill">${esc(report.partnerA.name)}</span>
+            ${ownTag(report.partnerA.ownership)}
+            <span class="badge-pill">Distortions: ${report.partnerA.distortions.length}</span>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="row" style="margin-bottom:4px;">
+            <span class="badge-pill">${esc(report.partnerB.name)}</span>
+            ${ownTag(report.partnerB.ownership)}
+            <span class="badge-pill">Distortions: ${report.partnerB.distortions.length}</span>
+          </div>
+        </div>
+      </div>
+      <p class="muted small">Higher ownership means more focus on "what I could do differently" instead of only "what they did wrong".</p>
+      <div class="hr"></div>
+      <h4>Fairness map</h4>
+      ${fairRows}
+      <div class="hr"></div>
+      <h4>Next steps (do these)</h4>
+      <ul class="small">${report.recommendations.tips.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+      ${report.recommendations.hardStops.length?`<h4>Non‑negotiables (stop or re‑think)</h4><ul class="small">${report.recommendations.hardStops.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+      <p class="muted small">This is not about blame. It is a map of how your beliefs and habits are colliding so you can choose something healthier.</p>
+    </div>
+    ${safetyHtml}
+  `;
+}
+
+// ===== INSIGHT LAB =====
+function viewInsights(root){
+  const v = state.vault;
+  const rel = v.relationships.find(r=>r.id===state.selectedRelId);
+  if(!rel){
+    root.innerHTML = `
+      <div class="card">
+        <h2>Insight Lab</h2>
+        <p class="muted small">Set up a relationship and run at least one conflict session to unlock deeper pattern analysis.</p>
+        <button class="primary" onclick="go('REL')">Set up relationship</button>
+      </div>
+    `;
+    return;
+  }
+  const sessions = v.sessions.filter(s=>s.relId===rel.id);
+  const latest = sessions.length ? sessions[sessions.length-1].report : null;
+  const uA = v.users.find(u=>u.id===rel.partnerIds[0])||{};
+  const uB = v.users.find(u=>u.id===rel.partnerIds[1])||{};
+
+  let ownershipHtml = '<p class="muted small">Run a conflict session to see who is actually taking responsibility.</p>';
+  let fairnessHtml = '<p class="muted small">Fairness map appears after at least one report.</p>';
+
+  if(latest){
+    ownershipHtml = `
+      <div class="grid">
+        <div class="col-6">
+          <div class="card" style="margin-bottom:0;">
+            <h4>${esc(latest.partnerA.name)}</h4>
+            <div class="row" style="margin-bottom:4px;">
+              ${latest.partnerA.ownership>=0.65?'<span class="tag good">High ownership</span>':latest.partnerA.ownership>=0.4?'<span class="tag warn">Mixed ownership</span>':'<span class="tag bad">Low ownership</span>'}
+              <span class="badge-pill">Distortions: ${latest.partnerA.distortions.length}</span>
+            </div>
+            <p class="muted small">Ownership is how much their story focuses on their own actions, not just yours.</p>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card" style="margin-bottom:0;">
+            <h4>${esc(latest.partnerB.name)}</h4>
+            <div class="row" style="margin-bottom:4px;">
+              ${latest.partnerB.ownership>=0.65?'<span class="tag good">High ownership</span>':latest.partnerB.ownership>=0.4?'<span class="tag warn">Mixed ownership</span>':'<span class="tag bad">Low ownership</span>'}
+              <span class="badge-pill">Distortions: ${latest.partnerB.distortions.length}</span>
+            </div>
+            <p class="muted small">If both scores are low, you are in a blame loop. Someone has to blink first.</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    fairnessHtml = renderFairnessMap(latest);
+  }
+
+  const bossA = pickFinalBossBelief(uA);
+  const bossB = pickFinalBossBelief(uB);
+
+  root.innerHTML = `
+    <div class="card">
+      <div class="row space-between">
+        <div>
+          <h2>Insight Lab</h2>
+          <p class="muted small">Under the simple questions, this page is where belief patterns and fairness gaps are exposed.</p>
+        </div>
+        <span class="tag">${esc(rel.name||'Relationship')}</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Rightness & responsibility</h3>
+      <p class="muted small">Humans tell self‑protective stories. This shows, roughly, who is actually taking responsibility in recent reports.</p>
+      ${ownershipHtml}
+    </div>
+
+    <div class="card">
+      <h3>Reality gap (fairness map)</h3>
+      <p class="muted small">Where you both agree things feel off is shared pain. Where you disagree about whether something is even a problem is a reality gap.</p>
+      ${fair

@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mirror (Offline CBT Couples)</title>
+  <meta name="color-scheme" content="dark light"/>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1622; --muted:#94a3b8; --text:#e6edf5;
+      --line:#1f2b3a; --accent:#7aa7ff; --good:#3ddc84; --warn:#f4c85d; --bad:#ff5c77;
+      --shadow: 0 14px 40px rgba(0,0,0,.45);
+      --r:14px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; background:radial-gradient(1200px 800px at 30% -10%, rgba(122,167,255,.18), transparent 55%),
+                         radial-gradient(900px 700px at 90% 10%, rgba(61,220,132,.12), transparent 55%),
+                         var(--bg); color:var(--text);}
+    a{color:var(--accent)}
+    .wrap{display:grid; grid-template-columns: 280px 1fr; min-height:100vh;}
+    .side{border-right:1px solid var(--line); padding:18px; position:sticky; top:0; height:100vh; background:rgba(15,22,34,.65); backdrop-filter: blur(6px);}
+    .brand{display:flex; gap:10px; align-items:center; margin-bottom:14px;}
+    .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg, rgba(122,167,255,.85), rgba(61,220,132,.75)); box-shadow: var(--shadow);}
+    .brand h1{font-size:16px; margin:0;}
+    .pill{display:inline-flex; gap:8px; align-items:center; padding:7px 10px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:12px;}
+    .nav{margin-top:14px; display:flex; flex-direction:column; gap:8px;}
+    .btn, button, input, select, textarea{font:inherit}
+    .nav button{
+      width:100%; text-align:left; padding:10px 12px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(15,22,34,.6); color:var(--text); cursor:pointer;
+    }
+    .nav button.active{outline:2px solid rgba(122,167,255,.35); background:rgba(122,167,255,.10)}
+    .nav button:disabled{opacity:.5; cursor:not-allowed}
+    .content{padding:22px; max-width:1100px;}
+    .card{
+      background:rgba(15,22,34,.7); border:1px solid var(--line); border-radius:var(--r);
+      box-shadow: var(--shadow); padding:16px; margin-bottom:14px;
+    }
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+    .grid{display:grid; grid-template-columns: repeat(12, 1fr); gap:12px;}
+    .col-6{grid-column: span 6}
+    .col-4{grid-column: span 4}
+    .col-12{grid-column: span 12}
+    .muted{color:var(--muted)}
+    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
+    input, select, textarea{
+      width:100%; padding:10px 11px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(11,15,20,.55); color:var(--text);
+    }
+    textarea{min-height:90px; resize:vertical}
+    .primary{
+      background:linear-gradient(135deg, rgba(122,167,255,.95), rgba(61,220,132,.80));
+      border:0; color:#071018; font-weight:700; cursor:pointer;
+    }
+    .danger{background:rgba(255,92,119,.12); border:1px solid rgba(255,92,119,.35); color:var(--text)}
+    .small{font-size:12px}
+    .tag{display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-size:12px;}
+    .tag.good{border-color: rgba(61,220,132,.45); color: rgba(61,220,132,.95)}
+    .tag.warn{border-color: rgba(244,200,93,.45); color: rgba(244,200,93,.95)}
+    .tag.bad{border-color: rgba(255,92,119,.45); color: rgba(255,92,119,.95)}
+    .hr{height:1px; background:var(--line); margin:12px 0}
+    .two{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    .chips{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(11,15,20,.35); color:var(--text); cursor:pointer; user-select:none;}
+    .chip[data-on="1"]{outline:2px solid rgba(122,167,255,.35); background:rgba(122,167,255,.10)}
+    .kpi{display:flex; gap:10px; flex-wrap:wrap}
+    .kpi .box{padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:rgba(11,15,20,.35)}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px}
+    .footer{margin-top:18px; color:var(--muted); font-size:12px}
+    @media (max-width: 880px){
+      .wrap{grid-template-columns: 1fr}
+      .side{position:relative; height:auto}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Mirror</h1>
+        <div class="muted small">Offline CBT conflict engine</div>
+      </div>
+    </div>
+    <div id="vaultPill" class="pill">🔒 Locked</div>
+
+    <div class="nav">
+      <button id="navLock" class="active" onclick="go('LOCK')">Vault Lock</button>
+      <button id="navDash" onclick="go('DASH')" disabled>Dashboard</button>
+      <button id="navUsers" onclick="go('USERS')" disabled>Onboarding (Users)</button>
+      <button id="navRels" onclick="go('RELS')" disabled>Relationships</button>
+      <button id="navSession" onclick="go('SESSION')" disabled>New Conflict Session</button>
+      <button id="navHist" onclick="go('HIST')" disabled>History</button>
+      <button id="navSettings" onclick="go('SETTINGS')" disabled>Settings</button>
+    </div>
+
+    <div class="footer">
+      <div class="muted">Privacy-first:</div>
+      <ul class="muted">
+        <li>Local encrypted vault (AES‑GCM)</li>
+        <li>No network calls</li>
+        <li>Stealth mode toggles icon/title</li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="content" id="app"></main>
+</div>
+
+<script>
+/* ========= Utilities ========= */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
+const nowISO = () => new Date().toISOString();
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
+const b64 = {
+  enc: (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))),
+  dec: (str) => Uint8Array.from(atob(str), c => c.charCodeAt(0)).buffer
+};
+function toast(msg){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style,{
+    position:'fixed', bottom:'18px', right:'18px', zIndex:9999,
+    padding:'10px 12px', border:'1px solid var(--line)', borderRadius:'12px',
+    background:'rgba(15,22,34,.85)', color:'var(--text)', boxShadow:'var(--shadow)'
+  });
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2200);
+}
+
+/* ========= Vault Crypto ========= */
+async function deriveKey(passphrase, saltB64){
+  const enc = new TextEncoder();
+  const passKey = await crypto.subtle.importKey("raw", enc.encode(passphrase), "PBKDF2", false, ["deriveKey"]);
+  const salt = saltB64 ? new Uint8Array(b64.dec(saltB64)) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt, iterations: 250000, hash:"SHA-256"},
+    passKey,
+    {name:"AES-GCM", length:256},
+    false,
+    ["encrypt","decrypt"]
+  );
+  return {key, saltB64: b64.enc(salt)};
+}
+async function encryptJson(key, obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = new TextEncoder().encode(JSON.stringify(obj));
+  const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, data);
+  return {iv: b64.enc(iv), ct: b64.enc(ct)};
+}
+async function decryptJson(key, blob){
+  const iv = new Uint8Array(b64.dec(blob.iv));
+  const ct = b64.dec(blob.ct);
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+/* ========= Data Model ========= */
+function newVault(){
+  return {
+    version: "1.0",
+    createdAt: nowISO(),
+    users: [],
+    relationships: [],
+    sessions: [],
+  };
+}
+
+const FAIR_AREAS = ["time","money","chores","emotional support","intimacy","decision-making","social media","family","outness/safety","privacy/phones","respect/tone"];
+const BEHAVIORS = {
+  green: ["Used 'I' statements","Asked for a break and gave a return time","Validated partner's feelings","Owned part of the problem"],
+  yellow:["Raised voice","Used sarcasm / passive aggression","Went silent / disengaged without stating a plan","Brought up old issues mid-argument"],
+  red:   ["Insults / name-calling","Threats of leaving to win","Threats of outing","Coercive control / intimidation"]
+};
+
+const DISTORTIONS = [
+  {name:"Mind reading", re:/\b(obviously|clearly)\b.*\b(thinks|wants|means)\b|\bi know you\b/i},
+  {name:"Catastrophizing", re:/\b(ruined|disaster|over|never recover|end of us)\b/i},
+  {name:"Overgeneralizing", re:/\b(always|never)\b/i},
+  {name:"Labeling", re:/\byou(’|')?re (selfish|crazy|evil|toxic|narcissist|useless)\b/i},
+  {name:"Fortune telling", re:/\b(you will|it will)\b.*\b(leave|cheat|fail)\b/i}
+];
+
+function scoreBehaviors(sel){
+  // green +1, yellow -1, red -3 per item checked
+  let s = 0;
+  for (const k of ["green","yellow","red"]){
+    for (const item of BEHAVIORS[k]){
+      if (sel?.[k]?.includes(item)){
+        if (k==="green") s += 1;
+        if (k==="yellow") s -= 1;
+        if (k==="red") s -= 3;
+      }
+    }
+  }
+  return s;
+}
+
+function detectDistortions(text){
+  const hits = [];
+  for (const d of DISTORTIONS){
+    if (d.re.test(text||"")) hits.push(d.name);
+  }
+  return [...new Set(hits)];
+}
+
+/* ========= App State ========= */
+const STORAGE_KEY = "mirror_vault_blob_v1";
+const STORAGE_SALT = "mirror_vault_salt_v1";
+const STORAGE_STEALTH = "mirror_stealth_v1";
+
+const state = {
+  view: "LOCK",
+  locked: true,
+  key: null,
+  vault: null,
+  selectedRelId: null
+};
+
+function setNavEnabled(on){
+  ["navDash","navUsers","navRels","navSession","navHist","navSettings"].forEach(id => $( "#" + id).disabled = !on);
+  $("#vaultPill").textContent = on ? "🔓 Unlocked" : "🔒 Locked";
+}
+
+function navActive(id){
+  $$(".nav button").forEach(b => b.classList.remove("active"));
+  $("#" + id).classList.add("active");
+}
+
+/* ========= Persistence ========= */
+async function saveVault(){
+  if (!state.key || !state.vault) return;
+  const blob = await encryptJson(state.key, state.vault);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(blob));
+}
+function loadVaultBlob(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+/* ========= Views ========= */
+function go(view){
+  state.view = view;
+  render();
+}
+
+function render(){
+  // Update nav active state
+  const map = {LOCK:"navLock", DASH:"navDash", USERS:"navUsers", RELS:"navRels", SESSION:"navSession", HIST:"navHist", SETTINGS:"navSettings"};
+  navActive(map[state.view] || "navLock");
+  const root = $("#app");
+  root.innerHTML = "";
+
+  if (state.view === "LOCK") return viewLock(root);
+  if (state.locked) return viewLocked(root);
+
+  if (state.view === "DASH") return viewDash(root);
+  if (state.view === "USERS") return viewUsers(root);
+  if (state.view === "RELS") return viewRels(root);
+  if (state.view === "SESSION") return viewSession(root);
+  if (state.view === "HIST") return viewHist(root);
+  if (state.view === "SETTINGS") return viewSettings(root);
+}
+
+function viewLocked(root){
+  root.innerHTML = `
+    <div class="card">
+      <h2>Vault is locked</h2>
+      <p class="muted">Unlock first. Your data stays on this device, encrypted.</p>
+      <button class="primary" onclick="go('LOCK')">Go to Vault Lock</button>
+    </div>
+  `;
+}
+
+/* ====== Lock / Unlock ====== */
+function viewLock(root){
+  const blob = loadVaultBlob();
+  const hasVault = !!blob;
+  const stealthOn = localStorage.getItem(STORAGE_STEALTH)==="1";
+  root.innerHTML = `
+    <div class="card">
+      <h2>Vault Lock</h2>
+      <p class="muted">This app is offline. Your vault is stored in this browser's local storage, encrypted with your passphrase.</p>
+      <div class="grid">
+        <div class="col-12">
+          <label>Passphrase (10+ chars). Do not forget it.</label>
+          <input id="pass" type="password" placeholder="A long sentence is better than a 'password'..." autocomplete="current-password"/>
+        </div>
+        <div class="col-12 row">
+          ${hasVault
+            ? `<button class="primary" onclick="unlock()">Unlock Vault</button>
+               <button class="danger" onclick="wipe()">Wipe Vault (local)</button>`
+            : `<button class="primary" onclick="createVault()">Create Vault</button>`
+          }
+          <span class="tag ${hasVault?'warn':'good'}">${hasVault? "Existing vault found" : "No vault yet"}</span>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="row">
+        <span class="tag">Stealth Mode</span>
+        <button onclick="toggleStealth()">${stealthOn ? "Disable" : "Enable"}</button>
+        <span class="muted small">Changes title/icon label to be neutral.</span>
+      </div>
+      <div class="footer">
+        <strong>Safety note:</strong> This is not emergency support. If you're in danger, seek local help.
+      </div>
+    </div>
+  `;
+}
+
+async function createVault(){
+  const pass = $("#pass").value || "";
+  if (pass.length < 10) return toast("Passphrase too short.");
+  const {key, saltB64} = await deriveKey(pass);
+  const vault = newVault();
+  const blob = await encryptJson(key, vault);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(blob));
+  localStorage.setItem(STORAGE_SALT, saltB64);
+  state.key = key; state.vault = vault; state.locked = false;
+  setNavEnabled(true);
+  toast("Vault created.");
+  go("DASH");
+}
+
+async function unlock(){
+  const pass = $("#pass").value || "";
+  const blob = loadVaultBlob();
+  if (!blob) return toast("No vault found.");
+  const saltB64 = localStorage.getItem(STORAGE_SALT);
+  if (!saltB64) return toast("Missing salt. Vault cannot be unlocked.");
+  try{
+    const {key} = await deriveKey(pass, saltB64);
+    const vault = await decryptJson(key, blob);
+    state.key = key; state.vault = vault; state.locked = false;
+    setNavEnabled(true);
+
+    // Auto-select if exactly one relationship exists
+    if (!state.selectedRelId && (vault.relationships||[]).length === 1){
+      state.selectedRelId = vault.relationships[0].id;
+    }
+
+    toast("Unlocked.");
+    go("DASH");
+  }catch(e){
+    console.error(e);
+    toast("Wrong passphrase (or corrupted vault).");
+  }
+}
+
+function wipe(){
+  if (!confirm("This deletes the local encrypted vault in this browser. Irreversible.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_SALT);
+  state.locked = true; state.key=null; state.vault=null; state.selectedRelId=null;
+  setNavEnabled(false);
+  toast("Vault wiped.");
+  render();
+}
+
+function toggleStealth(){
+  const on = localStorage.getItem(STORAGE_STEALTH)==="1";
+  localStorage.setItem(STORAGE_STEALTH, on ? "0":"1");
+  applyStealth();
+  render();
+}
+function applyStealth(){
+  const on = localStorage.getItem(STORAGE_STEALTH)==="1";
+  document.title = on ? "Utilities" : "Mirror (Offline CBT Couples)";
+}
+
+/* ===== Dashboard ===== */
+function viewDash(root){
+  const v = state.vault;
+  const selRel = v.relationships.find(r=>r.id===state.selectedRelId);
+  root.innerHTML = `
+    <div class="card">
+      <h2>Dashboard</h2>
+      <div class="kpi">
+        <div class="box"><div class="muted small">Users</div><div style="font-size:22px;font-weight:800">${v.users.length}</div></div>
+        <div class="box"><div class="muted small">Relationships</div><div style="font-size:22px;font-weight:800">${v.relationships.length}</div></div>
+        <div class="box"><div class="muted small">Conflict Sessions</div><div style="font-size:22px;font-weight:800">${v.sessions.length}</div></div>
+      </div>
+      <div class="hr"></div>
+      <div class="row">
+        <button class="primary" onclick="go('SESSION')">Start Conflict Session</button>
+        <button onclick="go('USERS')">Add / Edit Users</button>
+        <button onclick="go('RELS')">Relationships</button>
+        <span class="tag ${selRel?'good':'warn'}">${selRel ? "Selected: " + esc(selRel.name) : "No relationship selected"}</span>
+      </div>
+      <p class="muted small">No pep-talks. You want brutal clarity, you get brutal clarity. But no abuse-enabling.</p>
+    </div>
+  `;
+}
+
+/* ===== Users ===== */
+function viewUsers(root){
+  const v = state.vault;
+  const list = v.users.map(u => `
+    <div class="card">
+      <div class="row">
+        <div style="flex:1">
+          <div style="font-weight:800">${esc(u.displayName||"Unnamed")}</div>
+          <div class="muted small">${esc(u.pronouns||"")} · ${esc(u.genderIdentity||"")} · ${esc(u.sexualOrientation||"")}</div>
+          <div class="muted small">${esc(u.location||"")} · ${esc(u.languages||"")}</div>
+        </div>
+        <button onclick="editUser('${u.id}')">Edit</button>
+        <button class="danger" onclick="deleteUser('${u.id}')">Delete</button>
+      </div>
+    </div>
+ `).join("");
+
+  root.innerHTML = `
+    <div class="card">
+      <div class="row">
+        <h2 style="margin:0; flex:1">Users</h2>
+        <button class="primary" onclick="newUser()">Add User</button>
+      </div>
+      <p class="muted">Onboarding captures context so the engine can interpret conflicts realistically.</p>
+    </div>
+    ${list || `<div class="card"><p class="muted">No users yet. Add at least 2 to create a relationship.</p></div>`}
+  `;
+}
+
+function userForm(u, title){
+  const root = $("#app");
+  root.innerHTML = `
+    <div class="card">
+      <h2>${esc(title)}</h2>
+      <div class="grid">
+        <div class="col-6"><label>Display name</label><input id="u_name" value="${esc(u.displayName||"")}"/></div>
+        <div class="col-6"><label>Pronouns</label><input id="u_pro" value="${esc(u.pronouns||"")}"/></div>
+        <div class="col-6"><label>Gender identity</label><input id="u_gen" value="${esc(u.genderIdentity||"")}"/></div>
+        <div class="col-6"><label>Sexual orientation</label><input id="u_ori" value="${esc(u.sexualOrientation||"")}"/></div>
+        <div class="col-6"><label>Age</label><input id="u_age" type="number" value="${esc(u.age||"")}"/></div>
+        <div class="col-6"><label>Location</label><input id="u_loc" value="${esc(u.location||"")}"/></div>
+
+        <div class="col-6"><label>Cultural / religious background</label><input id="u_cult" value="${esc(u.culturalBackground||"")}"/></div>
+        <div class="col-6"><label>Languages</label><input id="u_lang" value="${esc(u.languages||"")}"/></div>
+
+        <div class="col-6"><label>Attachment style</label>
+          <select id="u_att">
+            ${["secure","anxious","avoidant","disorganized"].map(x=>`<option ${u.attachmentStyle===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
+        <div class="col-6"><label>Conflict style</label>
+          <select id="u_conf">
+            ${["fight","flight","freeze","fawn"].map(x=>`<option ${u.conflictStyle===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="col-12"><label>Current stressors</label><textarea id="u_stress">${esc(u.stressors||"")}</textarea></div>
+        <div class="col-6"><label>Trigger library (one per line)</label><textarea id="u_trig">${esc((u.triggers||[]).join("\n"))}</textarea></div>
+        <div class="col-6"><label>Core beliefs (one per line)</label><textarea id="u_bel">${esc((u.coreBeliefs||[]).join("\n"))}</textarea></div>
+
+        <div class="col-12 row">
+          <button class="primary" onclick="saveUser('${u.id}')">Save User</button>
+          <button onclick="go('USERS')">Cancel</button>
+        </div>
+      </div>
+      <p class="muted small">Not diagnostic. Just context for CBT-style pattern matching.</p>
+    </div>
+  `;
+}
+
+function newUser(){
+  userForm({id:uid()}, "New User");
+}
+function editUser(id){
+  const u = state.vault.users.find(x=>x.id===id);
+  if (!u) return toast("User not found.");
+  userForm(u, "Edit User");
+}
+async function saveUser(id){
+  const v = state.vault;
+  const u = {
+    id,
+    displayName: $("#u_name").value.trim(),
+    pronouns: $("#u_pro").value.trim(),
+    genderIdentity: $("#u_gen").value.trim(),
+    sexualOrientation: $("#u_ori").value.trim(),
+    age: ($("#u_age").value||"").trim(),
+    location: $("#u_loc").value.trim(),
+    culturalBackground: $("#u_cult").value.trim(),
+    languages: $("#u_lang").value.trim(),
+    attachmentStyle: $("#u_att").value,
+    conflictStyle: $("#u_conf").value,
+    stressors: $("#u_stress").value.trim(),
+    triggers: $("#u_trig").value.split("\n").map(s=>s.trim()).filter(Boolean),
+    coreBeliefs: $("#u_bel").value.split("\n").map(s=>s.trim()).filter(Boolean),
+    updatedAt: nowISO()
+  };
+  const idx = v.users.findIndex(x=>x.id===id);
+  if (idx>=0) v.users[idx]=u; else v.users.push(u);
+  await saveVault();
+  toast("User saved.");
+  go("USERS");
+}
+async function deleteUser(id){
+  if (!confirm("Delete this user?")) return;
+  const v = state.vault;
+  v.users = v.users.filter(u=>u.id!==id);
+  // also remove from relationships
+  v.relationships.forEach(r=>{
+    r.partnerIds = (r.partnerIds||[]).filter(pid=>pid!==id);
+  });
+  await saveVault();
+  toast("User deleted.");
+  render();
+}
+
+/* ===== Relationships ===== */
+function viewRels(root){
+  const v = state.vault;
+  const users = v.users;
+  const list = v.relationships.map(r=>{
+    const names = (r.partnerIds||[]).map(pid => users.find(u=>u.id===pid)?.displayName || "Unknown").join(" + ");
+    const selected = r.id===state.selectedRelId;
+    return `
+      <div class="card">
+        <div class="row">
+          <div style="flex:1">
+            <div style="font-weight:800">${esc(r.name || "Relationship")}</div>
+            <div class="muted small">${esc(r.structure||"")} · ${esc(r.status||"")} · ${esc(r.outnessLevel||"")}</div>
+            <div class="muted small">${esc(names)}</div>
+          </div>
+          <button class="${selected?'primary':''}" onclick="selectRel('${r.id}')">${selected?'Selected':'Select'}</button>
+          <button onclick="editRel('${r.id}')">Edit</button>
+          <button class="danger" onclick="deleteRel('${r.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  root.innerHTML = `
+    <div class="card">
+      <div class="row">
+        <h2 style="margin:0; flex:1">Relationships</h2>
+        <button class="primary" onclick="newRel()">Create Relationship</button>
+      </div>
+      <p class="muted">Select a relationship before starting a conflict session.</p>
+    </div>
+    ${list || `<div class="card"><p class="muted">No relationships yet. Create one.</p></div>`}
+  `;
+}
+
+function relForm(r, title){
+  const v = state.vault;
+  const options = v.users.map(u=>`<option value="${u.id}" ${r.partnerIds?.includes(u.id)?"selected":""}>${esc(u.displayName||u.id)}</option>`).join("");
+  $("#app").innerHTML = `
+    <div class="card">
+      <h2>${esc(title)}</h2>
+      <div class="grid">
+        <div class="col-12"><label>Relationship name</label><input id="r_name" value="${esc(r.name||"")}"/></div>
+
+        <div class="col-4"><label>Structure</label>
+          <select id="r_struct">
+            ${["monogamous","open","ENM","poly (later)"].map(x=>`<option ${r.structure===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
+        <div class="col-4"><label>Status</label>
+          <select id="r_status">
+            ${["dating","partnered","married","long-distance"].map(x=>`<option ${r.status===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
+        <div class="col-4"><label>Outness level</label>
+          <select id="r_out">
+            ${["not out","partially out","fully out"].map(x=>`<option ${r.outnessLevel===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="col-12"><label>Partners (select 2 for MVP)</label>
+          <select id="r_partners" multiple size="4">${options}</select>
+          <div class="muted small">Hold Ctrl/Cmd to select multiple.</div>
+        </div>
+
+        <div class="col-6"><label>Non‑negotiable rules (one per line)</label><textarea id="r_rules">${esc((r.rules||[]).join("\n"))}</textarea></div>
+        <div class="col-6"><label>Micro‑agreements (one per line)</label><textarea id="r_agree">${esc((r.agreements||[]).join("\n"))}</textarea></div>
+
+        <div class="col-12 row">
+          <button class="primary" onclick="saveRel('${r.id}')">Save Relationship</button>
+          <button onclick="go('RELS')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function newRel(){
+  if (state.vault.users.length < 2) return toast("Add at least 2 users first.");
+  relForm({id:uid(), partnerIds:[], rules:[], agreements:[]}, "New Relationship");
+}
+function editRel(id){
+  const r = state.vault.relationships.find(x=>x.id===id);
+  if (!r) return toast("Relationship not found.");
+  relForm(r, "Edit Relationship");
+}
+async function saveRel(id){
+  const v = state.vault;
+  const sel = [...$("#r_partners").selectedOptions].map(o=>o.value);
+  if (sel.length < 2) return toast("Select at least 2 partners for MVP.");
+  const r = {
+    id,
+    name: $("#r_name").value.trim() || "Relationship",
+    structure: $("#r_struct").value,
+    status: $("#r_status").value,
+    outnessLevel: $("#r_out").value,
+    partnerIds: sel.slice(0,2), // MVP: just 2
+    rules: $("#r_rules").value.split("\n").map(s=>s.trim()).filter(Boolean),
+    agreements: $("#r_agree").value.split("\n").map(s=>s.trim()).filter(Boolean),
+    updatedAt: nowISO()
+  };
+  const idx = v.relationships.findIndex(x=>x.id===id);
+  if (idx>=0) v.relationships[idx]=r; else v.relationships.push(r);
+
+  // auto-select if none or just created
+  if (!state.selectedRelId) state.selectedRelId = r.id;
+
+  await saveVault();
+  toast("Relationship saved.");
+  go("RELS");
+}
+async function deleteRel(id){
+  if (!confirm("Delete this relationship?")) return;
+  const v = state.vault;
+  v.relationships = v.relationships.filter(r=>r.id!==id);
+  if (state.selectedRelId===id) state.selectedRelId=null;
+  await saveVault();
+  toast("Relationship deleted.");
+  render();
+}
+async function selectRel(id){
+  state.selectedRelId = id;
+  await saveVault();
+  toast("Relationship selected.");
+  render();
+}
+
+/* ===== Session ===== */
+let sessionDraft = null;
+
+function viewSession(root){
+  const v = state.vault;
+  const rel = v.relationships.find(r=>r.id===state.selectedRelId);
+  if (!rel){
+    root.innerHTML = `
+      <div class="card">
+        <h2>New Conflict Session</h2>
+        <p class="muted">Select a relationship first.</p>
+        <button class="primary" onclick="go('RELS')">Go to Relationships</button>
+      </div>
+    `;
+    return;
+  }
+  const uA = v.users.find(u=>u.id===rel.partnerIds[0]);
+  const uB = v.users.find(u=>u.id===rel.partnerIds[1]);
+
+  if (!sessionDraft){
+    sessionDraft = {
+      id: uid(),
+      relId: rel.id,
+      createdAt: nowISO(),
+      mode: "async",
+      desiredOutcome: "understanding",
+      willing: "yes",
+      intakeA: null,
+      intakeB: null,
+      report: null
+    };
+  }
+
+  const stageA = !!sessionDraft.intakeA;
+  const stageB = !!sessionDraft.intakeB;
+  const canReport = stageA && stageB;
+
+  root.innerHTML = `
+    <div class="card">
+      <h2>New Conflict Session</h2>
+      <div class="row">
+        <span class="tag good">Relationship: ${esc(rel.name)}</span>
+        <span class="tag">${esc(uA?.displayName||"A")} + ${esc(uB?.displayName||"B")}</span>
+        <span class="tag ${canReport?'good':'warn'}">${canReport?'Ready to generate report':'Waiting for both intakes'}</span>
+      </div>
+      <div class="hr"></div>
+
+      <div class="grid">
+        <div class="col-4">
+          <label>Mode</label>
+          <select id="s_mode">
+            ${["async","live"].map(x=>`<option ${sessionDraft.mode===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
+        <div class="col-4">
+          <label>Desired outcome</label>
+          <select id="s_out">
+            ${["understanding","compromise","clarity","separation"].map(x=>`<option ${sessionDraft.desiredOutcome===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
+        <div class="col-4">
+          <label>Willing to work?</label>
+          <select id="s_will">
+            ${["yes","unclear","no"].map(x=>`<option ${sessionDraft.willing===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="row">
+        <button class="${stageA?'':'primary'}" onclick="startIntake('A')">${stageA?'Edit Intake A':'Start Intake A'} (${esc(uA?.displayName||"Partner A")})</button>
+        <button class="${stageB?'':'primary'}" onclick="startIntake('B')">${stageB?'Edit Intake B':'Start Intake B'} (${esc(uB?.displayName||"Partner B")})</button>
+        <button class="primary" onclick="generateReport()" ${canReport? "":"disabled"}>Generate Report</button>
+        <button class="danger" onclick="discardDraft()">Discard Draft</button>
+      </div>
+      <p class="muted small">Intakes are private. Only the report is shared by default.</p>
+    </div>
+
+    ${sessionDraft.report ? viewReportHtml(sessionDraft.report, true) : ""}
+  `;
+
+  // bind selectors
+  $("#s_mode").onchange = (e)=>sessionDraft.mode = e.target.value;
+  $("#s_out").onchange = (e)=>sessionDraft.desiredOutcome = e.target.value;
+  $("#s_will").onchange = (e)=>sessionDraft.willing = e.target.value;
+}
+
+function startIntake(which){
+  const v = state.vault;
+  const rel = v.relationships.find(r=>r.id===state.selectedRelId);
+  const pid = which==="A" ? rel.partnerIds[0] : rel.partnerIds[1];
+  const user = v.users.find(u=>u.id===pid);
+  const existing = which==="A" ? sessionDraft.intakeA : sessionDraft.intakeB;
+
+  const intake = existing || {
+    partnerId: pid,
+    facts: "",
+    thoughts: "",
+    emotions: "", // one per line: emotion:0-10
+    behaviors: {green:[], yellow:[], red:[]},
+    fairness: {feel:"unclear", areas:[]},
+    context: ""
+  };
+
+  $("#app").innerHTML = `
+    <div class="card">
+      <div class="row">
+        <h2 style="margin:0; flex:1">Private Intake: ${esc(user?.displayName||which)}</h2>
+        <span class="tag">${esc(user?.attachmentStyle||"")}</span>
+        <span class="tag">${esc(user?.conflictStyle||"")}</span>
+      </div>
+      <p class="muted">Facts → thoughts → feelings → behaviors. No mind-reading cosplay.</p>
+
+      <div class="grid">
+        <div class="col-12"><label>1) Facts (what happened, no opinions)</label><textarea id="i_facts">${esc(intake.facts||"")}</textarea></div>
+        <div class="col-12"><label>2) Interpretations / thoughts</label><textarea id="i_thoughts">${esc(intake.thoughts||"")}</textarea></div>
+        <div class="col-12"><label>3) Emotions (one per line like: hurt:7)</label><textarea id="i_emotions">${esc(intake.emotions||"")}</textarea></div>
+
+        <div class="col-12">
+          <label>4) Behaviors</label>
+          <div class="two">
+            <div>
+              <div class="tag good">Green (fair)</div>
+              ${behList("green", intake.behaviors.green)}
+            </div>
+            <div>
+              <div class="tag warn">Yellow (repairable)</div>
+              ${behList("yellow", intake.behaviors.yellow)}
+              <div style="height:10px"></div>
+              <div class="tag bad">Red (harmful)</div>
+              ${behList("red", intake.behaviors.red)}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label>5) Fairness perception</label>
+          <div class="row">
+            ${["fair","unfair","unclear"].map(x=>`
+              <span class="chip" data-feel="${x}" data-on="${intake.fairness.feel===x?1:0}" onclick="pickFeel('${x}')">${x}</span>
+            `).join("")}
+          </div>
+          <div style="height:8px"></div>
+          <div class="chips" id="fairChips">
+            ${FAIR_AREAS.map(a=>`<span class="chip" data-area="${esc(a)}" data-on="${intake.fairness.areas.includes(a)?1:0}" onclick="toggleArea('${esc(a)}')">${esc(a)}</span>`).join("")}
+          </div>
+        </div>
+
+        <div class="col-12"><label>6) Context (stressors, safety, minority stress, trauma, culture)</label><textarea id="i_ctx">${esc(intake.context||"")}</textarea></div>
+
+        <div class="col-12 row">
+          <button class="primary" onclick="saveIntake('${which}')">Save + Continue</button>
+          <button onclick="go('SESSION')">Back</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // helpers
+  window.pickFeel = (x)=>{
+    intake.fairness.feel = x;
+    $$(".chip[data-feel]").forEach(ch=>ch.dataset.on = ch.dataset.feel===x ? "1":"0");
+  };
+  window.toggleArea = (a)=>{
+    const idx = intake.fairness.areas.indexOf(a);
+    if (idx>=0) intake.fairness.areas.splice(idx,1); else intake.fairness.areas.push(a);
+    const el = $(`.chip[data-area="${cssEscape(a)}"]`);
+    if (el) el.dataset.on = idx>=0 ? "0":"1";
+  };
+
+  // stash draft intake reference for save
+  window.__activeIntake = intake;
+  window.__activeWhich = which;
+}
+
+function cssEscape(s){ return s.replace(/"/g,'\\"'); }
+
+function behList(kind, selected){
+  return BEHAVIORS[kind].map(item=>{
+    const on = selected.includes(item);
+    return `
+      <div class="row" style="gap:8px; align-items:flex-start">
+        <input type="checkbox" ${on?"checked":""} onchange="toggleBeh('${kind}', '${escAttr(item)}', this.checked)" style="width:auto; margin-top:3px"/>
+        <div style="flex:1">${esc(item)}</div>
+      </div>
+    `;
+  }).join("");
+}
+window.toggleBeh = (kind, item, on)=>{
+  const intake = window.__activeIntake;
+  const arr = intake.behaviors[kind];
+  const i = arr.indexOf(item);
+  if (on && i<0) arr.push(item);
+  if (!on && i>=0) arr.splice(i,1);
+};
+
+async function saveIntake(which){
+  const intake = window.__activeIntake;
+  intake.facts = $("#i_facts").value.trim();
+  intake.thoughts = $("#i_thoughts").value.trim();
+  intake.emotions = $("#i_emotions").value.trim();
+  intake.context = $("#i_ctx").value.trim();
+  if (which==="A") sessionDraft.intakeA = intake; else sessionDraft.intakeB = intake;
+  toast("Intake saved.");
+  go("SESSION");
+}
+
+function discardDraft(){
+  if (!confirm("Discard current draft session?")) return;
+  sessionDraft = null;
+  toast("Draft discarded.");
+  render();
+}
+
+/* ===== Report Generation ===== */
+function parseEmotions(lines){
+  const out = [];
+  (lines||"").split("\n").map(s=>s.trim()).filter(Boolean).forEach(line=>{
+    const m = line.match(/^(.+?):\s*(\d+)\s*$/);
+    if (m) out.push({emotion:m[1].trim(), intensity: Math.max(0, Math.min(10, parseInt(m[2],10)))});
+    else out.push({emotion: line, intensity: null});
+  });
+  return out;
+}
+
+function summarizeTheme(intA, intB, rel, v){
+  // extremely blunt heuristic headline
+  const areas = [...new Set([...(intA.fairness.areas||[]), ...(intB.fairness.areas||[])])];
+  if (areas.includes("privacy/phones")) return "You are not fighting about a phone. You are fighting about trust, control, and reassurance.";
+  if (areas.includes("outness/safety")) return "You are not fighting about PDA. You are fighting about safety versus visibility.";
+  if (areas.includes("chores")) return "You are not fighting about dishes. You are fighting about fairness and feeling taken for granted.";
+  return "You are not fighting about the surface issue. You are fighting about unmet needs and bad conflict habits.";
+}
+
+function safetyFlags(intA, intB){
+  const red = new Set([...(intA.behaviors.red||[]), ...(intB.behaviors.red||[])]);
+  const flags = [];
+  if (red.has("Threats of outing")) flags.push("Threats of outing detected (abusive).");
+  if (red.has("Coercive control / intimidation")) flags.push("Coercive control / intimidation detected.");
+  if (red.has("Insults / name-calling")) flags.push("Insults/name-calling detected.");
+  return flags;
+}
+
+function fairnessInsights(intA, intB, uA, uB){
+  const out = [];
+  if ((intA.fairness.areas||[]).includes("respect/tone") && (intA.behaviors.yellow||[]).includes("Raised voice")){
+    out.push(`${uA.displayName||"Partner A"} escalated tone (raised voice) while also framing the situation as a fairness issue. That's a contradiction: tone escalation makes fairness harder.`);
+  }
+  if ((intB.behaviors.yellow||[]).includes("Went silent / disengaged without stating a plan")){
+    out.push(`${uB.displayName||"Partner B"} disengaged without a return plan. That's not 'peacekeeping', it's avoidance. Avoidance breeds suspicion.`);
+  }
+  return out;
+}
+
+function distortionsBlock(intake){
+  const text = (intake.thoughts||"") + "\n" + (intake.facts||"");
+  return detectDistortions(text);
+}
+
+function privateFeedback(intake, user){
+  const s = scoreBehaviors(intake.behaviors);
+  const distort = distortionsBlock(intake);
+  const yell = (intake.behaviors.yellow||[]);
+  const reds = (intake.behaviors.red||[]);
+  const greens = (intake.behaviors.green||[]);
+  return {score:s, distortions:distort, greens, yellows:yell, reds};
+}
+
+function recommendations(rel, intA, intB){
+  const rules = rel.rules||[];
+  const hardStops = [
+    "Stop name-calling. It's not 'being honest'. It's lazy cruelty.",
+    "Stop using threats of leaving as a weapon.",
+    "Do not weaponize identity, trauma, or outness. Ever.",
+    "If anyone threatens outing or control, this is a safety issue, not a 'communication issue'."
+  ];
+  const tips = [
+    "Agree on a 'pause protocol': who calls the break, how long, and the exact return time.",
+    "Define phone/privacy boundaries explicitly. No assumptions. Write the agreement.",
+    "When you feel triggered, name the trigger before you act: 'This is activating my abandonment fear.'",
+    "Replace mind-reading with a question: 'What did you mean by that?'"
+  ];
+  return {rules, hardStops, tips};
+}
+
+async function generateReport(){
+  const v = state.vault;
+  const rel = v.relationships.find(r=>r.id===state.selectedRelId);
+  if (!rel || !sessionDraft?.intakeA || !sessionDraft?.intakeB) return toast("Need both intakes.");
+  const uA = v.users.find(u=>u.id===rel.partnerIds[0]) || {};
+  const uB = v.users.find(u=>u.id===rel.partnerIds[1]) || {};
+  const intA = sessionDraft.intakeA;
+  const intB = sessionDraft.intakeB;
+
+  const headline = summarizeTheme(intA, intB, rel, v);
+  const facts = [
+    `Partner A: ${oneLine(intA.facts)}`,
+    `Partner B: ${oneLine(intB.facts)}`
+  ];
+  const pattern = buildPattern(intA, intB);
+
+  const safety = safetyFlags(intA, intB);
+  const pA = privateFeedback(intA, uA);
+  const pB = privateFeedback(intB, uB);
+  const fairness = fairnessInsights(intA, intB, uA, uB);
+  const rec = recommendations(rel, intA, intB);
+
+  const report = {
+    id: sessionDraft.id,
+    relId: rel.id,
+    createdAt: sessionDraft.createdAt,
+    meta: {
+      mode: sessionDraft.mode,
+      desiredOutcome: sessionDraft.desiredOutcome,
+      willing: sessionDraft.willing,
+      relationshipName: rel.name,
+      partnerA: uA.displayName||"Partner A",
+      partnerB: uB.displayName||"Partner B",
+    },
+    headline,
+    neutralFacts: facts,
+    pattern,
+    safetyFlags: safety,
+    fairnessInsights: fairness,
+    privateA: pA,
+    privateB: pB,
+    recommendations: rec,
+    raw: {
+      emotionsA: parseEmotions(intA.emotions),
+      emotionsB: parseEmotions(intB.emotions),
+      fairnessAreas: [...new Set([...(intA.fairness.areas||[]), ...(intB.fairness.areas||[])])]
+    }
+  };
+
+  // Persist session
+  sessionDraft.report = report;
+  v.sessions.push({id: report.id, relId: report.relId, createdAt: report.createdAt, report});
+  await saveVault();
+  toast("Report generated & saved.");
+  render();
+}
+
+function oneLine(s){ return (s||"").replace(/\s+/g," ").trim().slice(0,260); }
+
+function buildPattern(intA, intB){
+  const aAvoid = (intB.behaviors.yellow||[]).includes("Went silent / disengaged without stating a plan");
+  const aAnger = (intA.behaviors.yellow||[]).includes("Raised voice") || /\balways|never\b/i.test(intA.thoughts||"");
+  const privacy = [...new Set([...(intA.fairness.areas||[]), ...(intB.fairness.areas||[])])].includes("privacy/phones");
+  if (privacy && aAvoid && aAnger) return "Trust‑control spiral: suspicion → privacy defense → escalated tone → more withdrawal → more suspicion.";
+  if (aAvoid && aAnger) return "Pursue‑withdraw loop: one pushes for immediate resolution, the other flees, both feel unsafe.";
+  return "Misaligned needs + poor conflict technique. Needs clarity, not escalation.";
+}
+
+function viewReportHtml(report, inline){
+  const R = report;
+  const sf = (R.safetyFlags||[]).length
+    ? `<div class="card danger"><h3>Safety Flag</h3><ul>${R.safetyFlags.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><p class="muted small">If safety is involved, stop using this app like a therapist replacement. Get real support.</p></div>`
+    : "";
+  const pb = (p)=>`
+    <div class="card">
+      <h3>Private Feedback: ${esc(p.who)}</h3>
+      <div class="row">
+        <span class="tag ${p.score>=1?'good':(p.score<=-3?'bad':'warn')}">Behavior score: ${p.score}</span>
+        ${p.distortions.length? `<span class="tag warn">Distortions: ${esc(p.distortions.join(", "))}</span>` : `<span class="tag good">No obvious distortions flagged</span>`}
+      </div>
+      <div class="hr"></div>
+      <div class="two">
+        <div>
+          <div class="tag good">Green</div>
+          <ul>${(p.greens||[]).map(x=>`<li>${esc(x)}</li>`).join("") || "<li class='muted'>None logged</li>"}</ul>
+        </div>
+        <div>
+          <div class="tag warn">Yellow</div>
+          <ul>${(p.yellows||[]).map(x=>`<li>${esc(x)}</li>`).join("") || "<li class='muted'>None logged</li>"}</ul>
+          <div style="height:10px"></div>
+          <div class="tag bad">Red</div>
+          <ul>${(p.reds||[]).map(x=>`<li>${esc(x)}</li>`).join("") || "<li class='muted'>None logged</li>"}</ul>
+        </div>
+      </div>
+      <p class="muted small">Blunt takeaway: fix behaviors before arguing the “meaning.” Behavior is the lever.</p>
+    </div>
+  `;
+  const pA = {who:R.meta.partnerA, score:R.privateA.score, distortions:R.privateA.distortions, greens:R.privateA.greens, yellows:R.privateA.yellows, reds:R.privateA.reds};
+  const pB = {who:R.meta.partnerB, score:R.privateB.score, distortions:R.privateB.distortions, greens:R.privateB.greens, yellows:R.privateB.yellows, reds:R.privateB.reds};
+
+  return `
+    <div class="card">
+      <h2>${inline ? "Conflict Report" : "Report"}</h2>
+      <div class="row">
+        <span class="tag">${esc(R.meta.relationshipName)}</span>
+        <span class="tag">${new Date(R.createdAt).toLocaleString()}</span>
+        <span class="tag">${esc(R.meta.mode)}</span>
+        <span class="tag">${esc(R.meta.desiredOutcome)}</span>
+      </div>
+      <div class="hr"></div>
+      <h3>Couple Summary</h3>
+      <p><strong>${esc(R.headline)}</strong></p>
+      <h4 class="muted">Neutral facts</h4>
+      <ul>${R.neutralFacts.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      <h4 class="muted">Pattern detected</h4>
+      <p>${esc(R.pattern)}</p>
+      ${(R.fairnessInsights||[]).length? `<h4 class="muted">Fairness insights</h4><ul>${R.fairnessInsights.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      <div class="hr"></div>
+      <h3>Non‑negotiables (stop doing these)</h3>
+      <ul>${R.recommendations.hardStops.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      <h3>Next steps (do these)</h3>
+      <ul>${R.recommendations.tips.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      ${(R.recommendations.rules||[]).length? `<h3>Relationship rules on file</h3><ul>${R.recommendations.rules.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      <p class="muted small">This app is not therapy. It's a structured mirror. If it shows abuse, believe it.</p>
+    </div>
+    ${sf}
+    ${pb(pA)}
+    ${pb(pB)}
+  `;
+}
+
+/* ===== History ===== */
+function viewHist(root){
+  const v = state.vault;
+  const relById = Object.fromEntries(v.relationships.map(r=>[r.id,r]));
+  const items = [...v.sessions].reverse().map(s=>{
+    const rel = relById[s.relId];
+    return `
+      <div class="card">
+        <div class="row">
+          <div style="flex:1">
+            <div style="font-weight:800">${esc(rel?.name || "Relationship")}</div>
+            <div class="muted small">${new Date(s.createdAt).toLocaleString()}</div>
+            <div class="muted small">${esc(s.report?.headline||"")}</div>
+          </div>
+          <button class="primary" onclick="openReport('${s.id}')">Open</button>
+          <button class="danger" onclick="deleteSession('${s.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  root.innerHTML = `
+    <div class="card">
+      <h2>History</h2>
+      <p class="muted">Saved reports (local, encrypted).</p>
+    </div>
+    ${items || `<div class="card"><p class="muted">No sessions yet.</p></div>`}
+  `;
+}
+
+function openReport(id){
+  const s = state.vault.sessions.find(x=>x.id===id);
+  if (!s) return toast("Not found.");
+  $("#app").innerHTML = `
+    ${viewReportHtml(s.report, false)}
+    <div class="card">
+      <div class="row">
+        <button onclick="go('HIST')">Back to History</button>
+        <button class="primary" onclick="exportJson('${id}')">Export JSON</button>
+      </div>
+      <p class="muted small">Export is unencrypted. Treat it like sensitive data.</p>
+    </div>
+  `;
+}
+
+async function deleteSession(id){
+  if (!confirm("Delete this session/report?")) return;
+  state.vault.sessions = state.vault.sessions.filter(s=>s.id!==id);
+  await saveVault();
+  toast("Deleted.");
+  render();
+}
+
+function exportJson(id){
+  const s = state.vault.sessions.find(x=>x.id===id);
+  if (!s) return;
+  const blob = new Blob([JSON.stringify(s.report, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `mirror-report-${id}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ===== Settings ===== */
+function viewSettings(root){
+  const stealthOn = localStorage.getItem(STORAGE_STEALTH)==="1";
+  root.innerHTML = `
+    <div class="card">
+      <h2>Settings</h2>
+      <div class="row">
+        <span class="tag">Stealth mode</span>
+        <button onclick="toggleStealth()">${stealthOn ? "Disable" : "Enable"}</button>
+      </div>
+      <div class="hr"></div>
+      <h3>Device lock</h3>
+      <p class="muted small">This MVP uses your browser's storage. For real deployment, use OS biometric/PIN + secure enclaves.</p>
+      <div class="hr"></div>
+      <h3>Export / Backup</h3>
+      <p class="muted small">Not implemented as encrypted backup in MVP. If you export, you are responsible for keeping it safe.</p>
+      <div class="hr"></div>
+      <button class="danger" onclick="wipe()">Wipe vault (local)</button>
+    </div>
+  `;
+}
+
+/* ========= Escaping ========= */
+function esc(s){ return (s??"").toString().replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function escAttr(s){ return (s??"").toString().replace(/'/g,"&#39;"); }
+
+/* ========= Boot ========= */
+(function(){
+  applyStealth();
+  // If vault exists, stay locked until unlock. If not, allow create.
+  const has = !!loadVaultBlob();
+  setNavEnabled(false);
+  state.locked = true;
+  state.vault = null;
+  state.key = null;
+  go("LOCK");
+})();
+</script>
+</body>
+</html>
