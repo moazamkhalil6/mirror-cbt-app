@@ -34,6 +34,18 @@
     .results h3 { margin: 0 0 4px 0; font-size: 0.85rem; }
     .results p { margin: 0; opacity: 0.9; }
     .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .status-row { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 1rem; }
+    .status-card { border-radius: 12px; padding: 0.85rem; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.35); display: flex; flex-direction: column; gap: 0.35rem; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; border: 1px solid rgba(148,163,184,0.35); }
+    .pill.success { background: rgba(16,185,129,0.12); color: #34d399; border-color: rgba(16,185,129,0.5); }
+    .pill.warn { background: rgba(234,179,8,0.12); color: #fcd34d; border-color: rgba(234,179,8,0.45); }
+    .pill.danger { background: rgba(248,113,113,0.12); color: #fca5a5; border-color: rgba(248,113,113,0.45); }
+    .meta { font-size: 0.76rem; opacity: 0.78; }
+    .inline-input { background: rgba(15,23,42,0.8); color: #e5e7eb; border: 1px solid rgba(148,163,184,0.35); border-radius: 8px; padding: 0.35rem 0.5rem; font-size: 0.85rem; width: 100%; }
+    .inline-input::placeholder { color: rgba(226,232,240,0.6); }
+    .actions-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .ghost-btn { background: rgba(15,23,42,0.6); color: #e5e7eb; border-radius: 10px; padding: 0.45rem 0.8rem; border: 1px solid rgba(148,163,184,0.4); font-weight: 600; font-size: 0.8rem; }
+    .small { font-size: 0.78rem; opacity: 0.7; }
   </style>
 </head>
 <body>
@@ -66,6 +78,39 @@
       </div>
       <div id="errorMsg" style="width:100%;font-size:0.75rem;color:#fecaca;display:none;margin-top:4px;"></div>
     </section>
+    <div class="status-row">
+      <div class="status-card">
+        <div class="flex gap" style="justify-content: space-between;">
+          <div class="flex gap">
+            <span>🛰️</span>
+            <div>
+              <div style="font-weight:700;font-size:0.9rem;">Connection & Sync</div>
+              <div class="small">Heartbeat keeps both sides in sync every few seconds.</div>
+            </div>
+          </div>
+          <div id="connectionPill" class="pill warn">Sync idle</div>
+        </div>
+        <div class="meta" id="lastSync">No sync yet.</div>
+        <div class="actions-row">
+          <input id="displayName" class="inline-input" type="text" placeholder="Add your name (optional)" />
+          <button class="ghost-btn" id="saveName">💾 Save name</button>
+          <button class="ghost-btn" id="exportBtn">⬇️ Export session</button>
+        </div>
+      </div>
+      <div class="status-card">
+        <div class="flex gap" style="justify-content: space-between;">
+          <div class="flex gap">
+            <span>🧭</span>
+            <div>
+              <div style="font-weight:700;font-size:0.9rem;">Live presence</div>
+              <div class="small">See who is connected and typing right now.</div>
+            </div>
+          </div>
+        </div>
+        <div class="meta" id="presenceA">Partner A: offline</div>
+        <div class="meta" id="presenceB">Partner B: offline</div>
+      </div>
+    </div>
     <div class="grid">
       <section class="panel" id="panelA">
         <div class="panel-header">
@@ -125,6 +170,13 @@
   let toneResultB = null;
   let pollInterval = null;
   let storageUri = '';
+  let myName = '';
+  let nameA = '';
+  let nameB = '';
+  let heartbeatInterval = null;
+  let lastSyncDisplay = 'No sync yet.';
+  const heartbeatIntervalMs = 3500;
+  const presenceTimeoutMs = 8000;
 
   // Debounce utility
   function debounce(fn, delay) {
@@ -220,8 +272,10 @@
     }
   }
   function updateEditInfos() {
-    document.getElementById('editInfoA').textContent = myRole === 'A' ? 'You can edit this panel.' : 'Read-only (belongs to Partner A).';
-    document.getElementById('editInfoB').textContent = myRole === 'B' ? 'You can edit this panel.' : 'Read-only (belongs to Partner B).';
+    const editableMsg = 'You can edit this panel.';
+    const readonlyMsg = 'Read-only (belongs to your partner).';
+    document.getElementById('editInfoA').textContent = myRole === 'A' ? editableMsg : readonlyMsg;
+    document.getElementById('editInfoB').textContent = myRole === 'B' ? editableMsg : readonlyMsg;
   }
   function renderPanels() {
     const taA = document.getElementById('textareaA');
@@ -296,6 +350,8 @@
     const analyzeBtn = document.getElementById('analyzeBtn');
     analyzeBtn.disabled = isAnalyzing || !sessionActive;
     analyzeBtn.textContent = isAnalyzing ? '⏳ Analyzing session...' : '🧠 Run CBT analysis';
+    document.getElementById('displayName').value = myName;
+    document.getElementById('lastSync').textContent = lastSyncDisplay;
   }
   function showError(msg) {
     const err = document.getElementById('errorMsg');
@@ -315,12 +371,49 @@
           if (myRole !== 'B' && typeof data.partnerB === 'string') partnerB = data.partnerB;
           result = data.result || null;
           isAnalyzing = data.isAnalyzing || false;
+          nameA = data.nameA || '';
+          nameB = data.nameB || '';
+          updatePresence(data);
+          updateSyncState();
           renderAll();
         })
         .catch(() => {
           showError('Could not sync session.');
         });
     }, 1500);
+  }
+  function updatePresence(data) {
+    const now = Date.now();
+    const hbA = Number(data.heartbeatA || 0);
+    const hbB = Number(data.heartbeatB || 0);
+    const onlineA = now - hbA < presenceTimeoutMs;
+    const onlineB = now - hbB < presenceTimeoutMs;
+    const pill = document.getElementById('connectionPill');
+    if (onlineA && onlineB) {
+      pill.textContent = 'Synced: both online';
+      pill.className = 'pill success';
+    } else if (onlineA || onlineB) {
+      pill.textContent = 'Partial sync: one partner offline';
+      pill.className = 'pill warn';
+    } else {
+      pill.textContent = 'Sync idle';
+      pill.className = 'pill danger';
+    }
+    const aLabel = nameA ? `${nameA} (Partner A)` : 'Partner A';
+    const bLabel = nameB ? `${nameB} (Partner B)` : 'Partner B';
+    document.getElementById('presenceA').textContent = `${aLabel}: ${onlineA ? 'online' : 'offline'}${onlineA ? ' (live)' : ''}`;
+    document.getElementById('presenceB').textContent = `${bLabel}: ${onlineB ? 'online' : 'offline'}${onlineB ? ' (live)' : ''}`;
+  }
+  function updateSyncState() {
+    const now = new Date();
+    lastSyncDisplay = `Last sync: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  }
+  function startHeartbeat() {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+      if (!sessionActive || !storageUri) return;
+      updateRemote(true);
+    }, heartbeatIntervalMs);
   }
   // Update remote JSON
   const debouncedUpdateA = debounce(() => {
@@ -333,13 +426,21 @@
       updateRemote();
     }
   }, 700);
-  function updateRemote() {
-    const payload = { partnerA, partnerB, result, isAnalyzing };
+  function updateRemote(isHeartbeat = false) {
+    const now = Date.now();
+    const payload = { partnerA, partnerB, result, isAnalyzing, nameA, nameB };
+    payload[`heartbeat${myRole}`] = now;
+    payload[`updated${myRole}`] = now;
     fetch(storageUri, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-    }).catch(() => {});
+    })
+      .then(() => {
+        if (!isHeartbeat) updateSyncState();
+        renderAll();
+      })
+      .catch(() => {});
   }
   function startSession() {
     const initial = { partnerA: '', partnerB: '', result: null, isAnalyzing: false };
@@ -360,6 +461,9 @@
         toneResultA = null;
         toneResultB = null;
         isAnalyzing = false;
+        nameA = myName || 'Partner A';
+        startHeartbeat();
+        updateRemote();
         startPolling();
         renderAll();
       })
@@ -392,6 +496,9 @@
         toneResultA = null;
         toneResultB = null;
         isAnalyzing = false;
+        nameB = myName || 'Partner B';
+        startHeartbeat();
+        updateRemote();
         startPolling();
         renderAll();
       })
@@ -410,6 +517,10 @@
     toneResultB = null;
     isAnalyzing = false;
     storageUri = '';
+    nameA = '';
+    nameB = '';
+    lastSyncDisplay = 'No sync yet.';
+    if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
     renderAll();
   }
@@ -424,6 +535,34 @@
       updateRemote();
       renderAll();
     }, 300);
+  }
+  function saveName() {
+    const value = document.getElementById('displayName').value.trim();
+    if (!value) { showError('Name cleared.'); }
+    myName = value;
+    if (myRole === 'A') nameA = value || 'Partner A';
+    if (myRole === 'B') nameB = value || 'Partner B';
+    if (sessionActive) updateRemote();
+    renderAll();
+  }
+  function exportSession() {
+    const payload = {
+      sessionId,
+      role: myRole,
+      partnerA,
+      partnerB,
+      nameA,
+      nameB,
+      result,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mirror-session-${sessionId || 'offline'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
   // Initial setup
   window.addEventListener('DOMContentLoaded', () => {
@@ -451,6 +590,8 @@
     });
     document.getElementById('toneBtnA').onclick = () => { toneResultA = fakeToneCheck(partnerA); renderToneResults(); };
     document.getElementById('toneBtnB').onclick = () => { toneResultB = fakeToneCheck(partnerB); renderToneResults(); };
+    document.getElementById('saveName').onclick = saveName;
+    document.getElementById('exportBtn').onclick = exportSession;
     renderAll();
   });
 })();
